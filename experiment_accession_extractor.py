@@ -40,10 +40,10 @@ def experiment_accession_extractor(searchTerm, Type, Limit):
 
 
     return exp_url[0]
-###  END Function ####
 
 
-exp_url = experiment_accession_extractor("human","experiment", "all")
+
+
 
 
 def extract_meta(exp_url):
@@ -63,30 +63,30 @@ def extract_meta(exp_url):
 
     response = requests.get(URL, headers=HEADERS)
 
+    '''Contains informations on priimarn id'''
     exp_dict = response.json()
 
-    # print "Accession"+": "+exp_dict["accession"]
-    # print "Description"+": "+exp_dict["description"]
-    # print "Assay"+": "+exp_dict["assay_term_name"]
-    # print "Date"+": "+exp_dict["date_released"]
-    # print "Version"+": "+exp_dict["schema_version"]
-    # print "Source"+": "+exp_dict["lab"]["title"]
-    # print "Link"+": "+"https://www.encodeproject.org"+exp_dict["files"][0]["href"]
-    for elem in exp_dict["files"]:
-        for k in elem:
-            print k
+    '''Contains information on relevent experiments'''
+
+    file_list = exp_dict["files"]
+    file_acc = []
+    href = []
+
+    for elem in file_list:
+        file_acc.append(elem["accession"])
+        href.append(elem["href"])
+
+
+
+    print file_acc
+    
 
 
 
 
+# Pseudo Main
 
-
-
-
-
-
-
-
+exp_url = experiment_accession_extractor("human","experiment", "all") # For all human experiments
 extract_meta(exp_url)
 
 
@@ -99,27 +99,6 @@ extract_meta(exp_url)
 
 
 
-# def generate_meta(dataset):
-#     """Generate Metadata TSV File
-#
-#     A function to generate a TSV metadata file describing experiments contained in a dictionary.
-#     Optimized for dictionaries generated with json-decoder.py
-#     Current Metadata: Filename*, Name*, Description, Source, Source Link, Sequencer, Health Info
-#     "*" Denotes CoGe Required Fields
-#
-#     Arguments:
-#         dataset: Python dictionary with datasets.
-#         Dictionary Structure: {huID:[link, health], ...}
-#
-#      Returns:
-#       None - Generates and writes metadata file "meta.txt".
-#     """
-#     with open('meta.txt', 'w') as metadata:
-#         #Write head row
-#         metadata.write("Filename\tName\tDescription\tSource\tSource_link\tSequencer\tHealth Records\n")
-#         #Iterate through data-set, write each data point meta entry.
-#         for key in dataset.keys():
-#             meta = generate_item_meta(key, dataset[key][0], dataset[key][1])
-#             metadata.write(meta)
+
 
 
