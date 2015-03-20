@@ -31,55 +31,55 @@ def experiment_accession_extractor(searchTerm, Type, Limit):
             if elem["@id"] not in exp_list:
                 exp_list.append(elem["@id"])
 
-    base_url = "https://www.encodeproject.org/"
+    base_url = "https://www.encodeproject.org"
     exp_url = []
     for elem in exp_list:
         exp_url.append(base_url+elem)
 
 
-
-
-    return exp_url[0]
-
-
-
-
-
+    return exp_url
 
 def extract_meta(exp_url):
-    """Extracts the meta data fields: Filename*, Name*, Description, Source, Source Link, Sequencer, Health Info
 
-    A function to generate a list of all experiments found in encode that is used as an input to extract relavent
-    metadata fields for CoGe
+    with open('experiment_metadata.tsv', 'w') as metadata:
+        metadata.write("Filename\tName\tDescription\tSource\tSource_Link\tSequencer\tFiletype\tBiosample\n")
+        # for each experiment accession
+        for elem in exp_url[0:1000]:
+            HEADERS = {'accept': 'application/json'}
+            URL = elem
+            response = requests.get(URL, headers=HEADERS)
+            exp_dict = response.json()
 
-    Arguments:
-    exp_url: The experiment URL that contains the information for the experiment
+            # For each file in the accession, write it to the tsv
+            i = 0
+            while i < len(exp_dict["files"]):
 
-    Returns: A dict object containing Filename, Name, Decription, Source, Source Link, Platform, biosample
-    """
-    HEADERS = {'accept': 'application/json'}
+                if exp_dict["files"][i]["file_format"] == "fastq":
+                    data_dict = {}
+                    data_dict.fromkeys(["Filename","Name","Description","Source","Source_Link","Sequencer","Filetype","Biosample"])
+                    data_dict["Filename"] = exp_dict["files"][i]["href"]
 
-    URL = exp_url
+                    # Get the filename and strip the '/'s from it
+                    filename = data_dict["Filename"]
+                    temp = filename.split("/")
+                    # Write exp_dict values to metadata file
+                    metadata.write(temp[4] + "\t") # Filename
+                    metadata.write(exp_dict["accession"] + "\t") # Name
+                    metadata.write(exp_dict["description"] + "\t") # Description
+                    metadata.write(exp_dict["award"]["project"] + "\t") # Source
+                    metadata.write(URL + "\t") # Source_Link
+                    # Check if the platform key/value pair exists in exp_dict and write it to the tsv
+                    if "platform" in exp_dict["files"][i]:
+                        metadata.write(exp_dict["files"][i]["platform"]["title"] + "\t") # Sequencer
+                    else:
+                        metadata.write("none\t") # Sequencer
 
-    response = requests.get(URL, headers=HEADERS)
-
-    '''Contains informations on priimarn id'''
-    exp_dict = response.json()
-
-    '''Contains information on relevent experiments'''
-
-    file_list = exp_dict["files"]
-    file_acc = []
-    href = []
-
-    for elem in file_list:
-        file_acc.append(elem["accession"])
-        href.append(elem["href"])
+                    metadata.write(exp_dict["files"][i]["file_format"] + "\t") # File Type
+                    metadata.write(exp_dict["biosample_type"]+" : "+exp_dict["biosample_term_name"] + "\t") # Biosample
+                    metadata.write("\n")
+                i = i + 1
 
 
-
-    print file_acc
-    
 
 
 
