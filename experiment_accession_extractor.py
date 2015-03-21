@@ -42,7 +42,7 @@ def experiment_accession_extractor(searchTerm, Type, Limit):
 def extract_meta(exp_url):
 
     with open('experiment_metadata.tsv', 'w') as metadata:
-        metadata.write("Filename\tName\tDescription\tBiosample\tDate_Created\tSource\tSource_Link\tSequencer\tRun_Type\tFiletype\n")  #"Filename\tName\tDescription\tDate_Created\tBiosample\tSource\tSource_Link\tSequencer\tFiletype\tBiosample\n"
+        metadata.write("Filename\tName\tDescription\tLab\tBiosample\tDate_Created\tSource\tSource_Link\tSequencer\tRun_Type\tFiletype\n")  #"Filename\tName\tDescription\tDate_Created\tBiosample\tSource\tSource_Link\tSequencer\tFiletype\tBiosample\n"
         # for each experiment accession
         for elem in exp_url[0:2]:  # Testing Center
             HEADERS = {'accept': 'application/json'}
@@ -66,7 +66,7 @@ def extract_meta(exp_url):
                     metadata.write(temp[4] + "\t")  # Filename
                     metadata.write(exp_dict["accession"] + "\t")  # Name
                     metadata.write(exp_dict["description"] + "\t")  # Description
-                    metadata.write(exp_dict["lab"]["title"] + "\t")  # Lab BREAKS THE FILE
+                    metadata.write(exp_dict["lab"]["title"] + "\t")  # Lab
 
                     # Check if the platform key/value pair exists in exp_dict and write it to the tsv
                     if "biosample_type" in exp_dict:
@@ -95,9 +95,7 @@ def extract_meta(exp_url):
                 i = i + 1
 
 
-'''Code breaks at ENCSR175OMA - RNA Bind-n-Seq (RBNS) pulldown experiment against hnRNPD
-    experiment : Cannot find biosample_type_id
-    '''
+
 
 
 
