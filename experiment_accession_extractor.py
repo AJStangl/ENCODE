@@ -42,7 +42,7 @@ def experiment_accession_extractor(searchTerm, Type, Limit):
 def extract_meta(exp_url):
 
     with open('experiment_metadata.tsv', 'w') as metadata:
-        metadata.write("Filename\tName\tDescription\tBiosample\tDate_Created\tSource\tSource_Link\tSequencer\tRun_Type\tFiletype\n")#"Filename\tName\tDescription\tDate_Created\tBiosample\tSource\tSource_Link\tSequencer\tFiletype\tBiosample\n"
+        metadata.write("Filename\tName\tDescription\tBiosample\tDate_Created\tSource\tSource_Link\tSequencer\tRun_Type\tFiletype\n")  #"Filename\tName\tDescription\tDate_Created\tBiosample\tSource\tSource_Link\tSequencer\tFiletype\tBiosample\n"
         # for each experiment accession
         for elem in exp_url:
             HEADERS = {'accept': 'application/json'}
@@ -54,34 +54,40 @@ def extract_meta(exp_url):
             i = 0
             while i < len(exp_dict["files"]):
 
-                if exp_dict["files"][i]["file_format"] == "fastq": # Only returns the fastq file data formats
+                if exp_dict["files"][i]["file_format"] == "fastq":  # Only returns the fastq file data formats
                     data_dict = {}
-                    data_dict.fromkeys(["Filename","Name","Description","Date_Created","Biosample","Source","Source_Link","Sequencer","Run_Type","Filetype"])
+                    data_dict.fromkeys(["Filename", "Name", "Description", "Lab", "Date_Created", "Biosample", "Source", "Source_Link", "Sequencer", "Run_Type", "Filetype"])
                     data_dict["Filename"] = exp_dict["files"][i]["href"]
 
                     # Get the filename and strip the '/'s from it
                     filename = data_dict["Filename"]
                     temp = filename.split("/")
                     # Write exp_dict values to metadata file
-                    metadata.write(temp[4] + "\t") # Filename
-                    metadata.write(exp_dict["accession"] + "\t") # Name
-                    metadata.write(exp_dict["description"] + "\t") # Description
-                    metadata.write(exp_dict["biosample_type"]+" : "+exp_dict["biosample_term_name"] + "\t") # Biosample
-                    metadata.write(exp_dict["files"][i]["date_created"] + "\t") # Date Created
-                    metadata.write(exp_dict["award"]["project"] + "\t") # Source
-                    # metadata.write(URL + "\t") # Source_Link
-                    metadata.write("https://www.encodeproject.org"+exp_dict["files"][i]["href"] +"\t") # Source Link
+                    metadata.write(temp[4] + "\t")  # Filename
+                    metadata.write(exp_dict["accession"] + "\t")  # Name
+                    metadata.write(exp_dict["description"] + "\t")  # Description
+                    metadata.write(exp_dict["lab"]["title"] + "\t")  # Lab
+
+                    # Check if the platform key/value pair exists in exp_dict and write it to the tsv
+                    if "biosample_type" in exp_dict:
+                        metadata.write(exp_dict["biosample_type"]+" : "+exp_dict["biosample_term_name"] + "\t")  #Biosample
+                    else:
+                        metadata.write("unknown\t")  # Biosample
+                    metadata.write(exp_dict["files"][i]["date_created"] + "\t")  # Date Created
+                    metadata.write(exp_dict["award"]["project"] + "\t")  # Source
+                    # Add Lab field for meta data
+                    metadata.write("https://www.encodeproject.org"+exp_dict["files"][i]["href"] + "\t")  # Source Link
 
                     # Check if the platform key/value pair exists in exp_dict and write it to the tsv
                     if "platform" in exp_dict["files"][i]:
-                        metadata.write(exp_dict["files"][i]["platform"]["title"] + "\t") # Sequencer
+                        metadata.write(exp_dict["files"][i]["platform"]["title"] + "\t")  # Sequencer
                     else:
                         metadata.write("none\t") # Sequencer
                     if "run_type" in exp_dict:
-                        metadata.write(exp_dict["run_type"] + "\t") # Run Type
+                        metadata.write(exp_dict["run_type"] + "\t")  # Run Type
                     else:
                         metadata.write("none\t") # Run Type
-                    metadata.write(exp_dict["files"][i]["file_format"] + "\t") # File Type
+                    metadata.write(exp_dict["files"][i]["file_format"] + "\t")  # File Type
 
 
                     metadata.write("\n")
