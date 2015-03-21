@@ -42,7 +42,7 @@ def experiment_accession_extractor(searchTerm, Type, Limit):
 def extract_meta(exp_url):
 
     with open('experiment_metadata.tsv', 'w') as metadata:
-        metadata.write("Filename\tName\tDescription\tSource\tSource_Link\tSequencer\tFiletype\tBiosample\n")
+        metadata.write("Filename\tName\tDescription\tBiosample\tDate_Created\tSource\tSource_Link\tSequencer\tRun_Type\tFiletype\n")#"Filename\tName\tDescription\tDate_Created\tBiosample\tSource\tSource_Link\tSequencer\tFiletype\tBiosample\n"
         # for each experiment accession
         for elem in exp_url:
             HEADERS = {'accept': 'application/json'}
@@ -56,7 +56,7 @@ def extract_meta(exp_url):
 
                 if exp_dict["files"][i]["file_format"] == "fastq": # Only returns the fastq file data formats
                     data_dict = {}
-                    data_dict.fromkeys(["Filename","Name","Description","Date Created","Biosample","Source","Source_Link","Sequencer","Run Type","Filetype"])
+                    data_dict.fromkeys(["Filename","Name","Description","Date_Created","Biosample","Source","Source_Link","Sequencer","Run_Type","Filetype"])
                     data_dict["Filename"] = exp_dict["files"][i]["href"]
 
                     # Get the filename and strip the '/'s from it
@@ -66,22 +66,31 @@ def extract_meta(exp_url):
                     metadata.write(temp[4] + "\t") # Filename
                     metadata.write(exp_dict["accession"] + "\t") # Name
                     metadata.write(exp_dict["description"] + "\t") # Description
-                    metadata.write(exp_dict["files"][i]["date_created"] + "\t") # Date Created
                     metadata.write(exp_dict["biosample_type"]+" : "+exp_dict["biosample_term_name"] + "\t") # Biosample
+                    metadata.write(exp_dict["files"][i]["date_created"] + "\t") # Date Created
                     metadata.write(exp_dict["award"]["project"] + "\t") # Source
-                    metadata.write(URL + "\t") # Source_Link
+                    # metadata.write(URL + "\t") # Source_Link
+                    metadata.write("https://www.encodeproject.org"+exp_dict["files"][i]["href"] +"\t") # Source Link
+
                     # Check if the platform key/value pair exists in exp_dict and write it to the tsv
                     if "platform" in exp_dict["files"][i]:
                         metadata.write(exp_dict["files"][i]["platform"]["title"] + "\t") # Sequencer
                     else:
                         metadata.write("none\t") # Sequencer
-                    metadata.write(exp_dict["run_type"] + "\t") # Run Type
+                    if "run_type" in exp_dict:
+                        metadata.write(exp_dict["run_type"] + "\t") # Run Type
+                    else:
+                        metadata.write("none\t") # Run Type
                     metadata.write(exp_dict["files"][i]["file_format"] + "\t") # File Type
 
 
                     metadata.write("\n")
                 i = i + 1
 
+
+'''Code breaks at ENCSR175OMA - RNA Bind-n-Seq (RBNS) pulldown experiment against hnRNPD
+    experiment : Cannot find biosample_type_id
+    '''
 
 
 
