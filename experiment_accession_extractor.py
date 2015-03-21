@@ -44,7 +44,7 @@ def extract_meta(exp_url):
     with open('experiment_metadata.tsv', 'w') as metadata:
         metadata.write("Filename\tName\tDescription\tBiosample\tDate_Created\tSource\tSource_Link\tSequencer\tRun_Type\tFiletype\n")  #"Filename\tName\tDescription\tDate_Created\tBiosample\tSource\tSource_Link\tSequencer\tFiletype\tBiosample\n"
         # for each experiment accession
-        for elem in exp_url:
+        for elem in exp_url[0:2]:  # Testing Center
             HEADERS = {'accept': 'application/json'}
             URL = elem
             response = requests.get(URL, headers=HEADERS)
@@ -56,7 +56,7 @@ def extract_meta(exp_url):
 
                 if exp_dict["files"][i]["file_format"] == "fastq":  # Only returns the fastq file data formats
                     data_dict = {}
-                    data_dict.fromkeys(["Filename", "Name", "Description", "Lab", "Date_Created", "Biosample", "Source", "Source_Link", "Sequencer", "Run_Type", "Filetype"])
+                    data_dict.fromkeys(["Filename", "Name", "Description", "Lab", "Date_Created", "Biosample", "Source","Source_Link", "Sequencer", "Run_Type", "Filetype"])
                     data_dict["Filename"] = exp_dict["files"][i]["href"]
 
                     # Get the filename and strip the '/'s from it
@@ -66,7 +66,7 @@ def extract_meta(exp_url):
                     metadata.write(temp[4] + "\t")  # Filename
                     metadata.write(exp_dict["accession"] + "\t")  # Name
                     metadata.write(exp_dict["description"] + "\t")  # Description
-                    metadata.write(exp_dict["lab"]["title"] + "\t")  # Lab
+                    metadata.write(exp_dict["lab"]["title"] + "\t")  # Lab BREAKS THE FILE
 
                     # Check if the platform key/value pair exists in exp_dict and write it to the tsv
                     if "biosample_type" in exp_dict:
@@ -75,6 +75,7 @@ def extract_meta(exp_url):
                         metadata.write("unknown\t")  # Biosample
                     metadata.write(exp_dict["files"][i]["date_created"] + "\t")  # Date Created
                     metadata.write(exp_dict["award"]["project"] + "\t")  # Source
+                    print exp_dict["award"]["project"]
                     # Add Lab field for meta data
                     metadata.write("https://www.encodeproject.org"+exp_dict["files"][i]["href"] + "\t")  # Source Link
 
