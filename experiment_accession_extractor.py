@@ -87,54 +87,68 @@ def extract_meta(exp_url):
                     data_dict.fromkeys(["Filename", "Name", "Description", "Lab", "Assay", "Cell_Type", "Biosample", "Target_Gene", "Date_Created", "Source","Source_Link", "Sequencer", "Run_Type", "Filetype"])
 
                     # Get the filename and strip the '/'s from the key ["files"][i]["href"]
+                    # Filename
                     data_dict["Filename"] = exp_dict["files"][i]["href"]
                     filename = data_dict["Filename"]
                     temp = filename.split("/")
+                    metadata.write(temp[4] + "\t")
 
-                    # Write exp_dict values to metadata file
-                    metadata.write(temp[4] + "\t")                                                        # Filename
-                    metadata.write(exp_dict["accession"] + "\t")                                          # Name
-                    # metadata.write(exp_dict["description"] + "\t")
-                    metadata.write(exp_dict["description"] + "\t")  #  Description
-                    metadata.write(exp_dict["lab"]["title"] + "\t") # Lab
+                    # Name
+                    metadata.write(exp_dict["accession"] + "\t")
 
+                    # Description
+                    metadata.write(exp_dict["description"] + "\t")
+
+                    # Lab
+                    metadata.write(exp_dict["lab"]["title"] + "\t")
+
+                    # Assay
                     if "replicate" in exp_dict["files"][i]:
-                        metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["assay_term_name"] + "\t")    # Assay
+                        metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["assay_term_name"] + "\t")
                     else:
                         metadata.write("Not Avail" + "\t")
 
-                    # Check if the platform key/value pair exists in exp_dict and write it to the tsv
+                    # Cell_Type
                     if "biosample_type" in exp_dict:
-                        metadata.write(exp_dict["biosample_type"] + "\t")                                  # Cell_Type
+                        metadata.write(exp_dict["biosample_type"] + "\t")
                     else:
-                        metadata.write("unknown\t")                                                        # Cell_Type
+                        metadata.write("unknown\t")
 
+                    # Biosample
                     if "biosample_term_name" in exp_dict:
-                        metadata.write(exp_dict["biosample_term_name"] + "\t")# Biosample
+                        metadata.write(exp_dict["biosample_term_name"] + "\t")
                     else:
                         metadata.write("unknown" + "\t")
 
+                    # Target_Gene
                     if "replicate" in exp_dict["files"][i] and "target" in exp_dict["files"][i]["replicate"]["experiment"]:
-                        metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["target"]["name"] + "\t") # Target_Gene
+                        metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["target"]["name"] + "\t")
                     else:
                         metadata.write("Not Avail" + "\t")
 
+                    # Date Created
+                    metadata.write(exp_dict["files"][i]["date_created"] + "\t")
 
-                    metadata.write(exp_dict["files"][i]["date_created"] + "\t")                            # Date Created
-                    metadata.write(exp_dict["award"]["project"] + "\t")                                    # Source
-                    metadata.write("https://www.encodeproject.org"+exp_dict["files"][i]["href"] + "\t")    # Source Link
+                    # Source
+                    metadata.write(exp_dict["award"]["project"] + "\t")
 
-                    # Check if the platform key/value pair exists in exp_dict and write it to the tsv
+                    # Source Link
+                    metadata.write("https://www.encodeproject.org"+exp_dict["files"][i]["href"] + "\t")
+
+                    # Sequencer
                     if "platform" in exp_dict["files"][i]:
-                        metadata.write(exp_dict["files"][i]["platform"]["title"] + "\t")                   # Sequencer
+                        metadata.write(exp_dict["files"][i]["platform"]["title"] + "\t")
                     else:
-                        metadata.write("unknown" + "\t")                                                   # Sequencer
-                    if "run_type" in exp_dict:
-                        metadata.write(exp_dict["run_type"] + "\t")                                        # Run Type
-                    else:
-                        metadata.write("unknown" + "\t")                                                        # Run Type
-                    metadata.write(exp_dict["files"][i]["file_format"] + "\t")                             # File Type
+                        metadata.write("unknown" + "\t")
 
+                    # Run Type
+                    if "run_type" in exp_dict:
+                        metadata.write(exp_dict["run_type"] + "\t")
+                    else:
+                        metadata.write("unknown" + "\t")
+
+                    # File Type
+                    metadata.write(exp_dict["files"][i]["file_format"] + "\t")
 
                     metadata.write("\n")
                 i = i + 1
