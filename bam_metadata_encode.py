@@ -31,9 +31,10 @@ for elem in exp_list:
 
 with open('bam_metadata_encode.tsv', 'w') as metadata:
     metadata.write(
-        "Filename\tName\tDescription\tAssay\tCell_Type\tBio_Sample\tTarget\tAssembly\tLab\tDate\tVersion\tSource\tDownload_Link\tSource_Link\tSequencer\tRun_Type\tFile_Type\n")
+        "Filename\tName\tDescription\tAssay\tCell_Type\tBio_Sample\tTarget\tAssembly\tLab\tDate\tVersion\tSource"
+        "\tDownload_Link\tSource_Link\tSequencer\tRun_Type\tFile_Type\tFile_Size\n")
 
-    for elem in exp_url:  # Testing Center
+    for elem in exp_url[0:10]:  # Testing Center
         response = requests.get(elem, headers=HEADERS)
 
         exp_dict = response.json()
@@ -48,7 +49,7 @@ with open('bam_metadata_encode.tsv', 'w') as metadata:
                 data_dict.fromkeys(
                     ["Filename", "Name", "Description", "Version", "Lab", "Assay", "Cell_Type", "Bio_Sample",
                      "Target", "Assembly", "Date", "Source", "Download_Link", "Source_Link", "Sequencer", "Run_Type",
-                     "File_Type"])
+                     "File_Type", "file_size"])
 
                 # Start Data Extraction
                 #######################################################################################################
@@ -84,7 +85,7 @@ with open('bam_metadata_encode.tsv', 'w') as metadata:
                 try:
                     metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["biosample_type"] + "\t")
                 except KeyError:
-                     metadata.write(exp_dict["biosample_type"] + "\t")
+                    metadata.write(exp_dict["biosample_type"] + "\t")
 
                 # Target
                 try:
@@ -94,9 +95,9 @@ with open('bam_metadata_encode.tsv', 'w') as metadata:
 
                 # Assembly
                 try:
-                     metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["assembly"][0] + "\t")
+                    metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["assembly"][0] + "\t")
                 except (KeyError, IndexError):
-                     metadata.write(exp_dict["files"][i]["assembly"] + "\t")
+                    metadata.write(exp_dict["files"][i]["assembly"] + "\t")
 
                 # Lab
                 try:
@@ -118,7 +119,7 @@ with open('bam_metadata_encode.tsv', 'w') as metadata:
                 metadata.write(exp_dict["award"]["project"] + "\t")
 
                 # Download_Link
-                metadata.write("https://www.encodeproject.org"+exp_dict["files"][i]["href"] + "\t")
+                metadata.write("https://www.encodeproject.org" + exp_dict["files"][i]["href"] + "\t")
 
                 # Source_Link
                 metadata.write(elem + "\t")
@@ -137,6 +138,10 @@ with open('bam_metadata_encode.tsv', 'w') as metadata:
 
                 # File_Type
                 metadata.write(exp_dict["files"][i]["file_format"] + "\t")
+
+                # File_Size
+                fsize = (exp_dict["files"][i]["file_size"]*9.5367431640625e-07)
+                metadata.write(str(fsize) + "\t")
 
                 # End of Metadata File Entry
                 metadata.write("\n")
