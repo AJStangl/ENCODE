@@ -33,7 +33,7 @@ with open('bam_metadata_encode.tsv', 'w') as metadata:
     metadata.write(
         "Filename\tName\tDescription\tAssay\tCell_Type\tBio_Sample\tTarget\tAssembly\tLab\tDate\tVersion\tSource\tDownload_Link\tSource_Link\tSequencer\tRun_Type\tFile_Type\n")
 
-    for elem in exp_url[0:1000]:  # Testing Center
+    for elem in exp_url:  # Testing Center
         response = requests.get(elem, headers=HEADERS)
 
         exp_dict = response.json()
@@ -63,32 +63,52 @@ with open('bam_metadata_encode.tsv', 'w') as metadata:
                 metadata.write(exp_dict["accession"] + "\t")
 
                 # Description
-                metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["description"] + "\t")
+                try:
+                    metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["description"] + "\t")
+                except KeyError:
+                    metadata.write(exp_dict["description"] + "\t")
 
                 # Assay
-                metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["assay_term_name"] + "\t")
+                try:
+                    metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["assay_term_name"] + "\t")
+                except KeyError:
+                    metadata.write(exp_dict["assay_term_name"] + "\t")
 
                 # Cell_Type
-                metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["biosample_term_name"] + "\t")
+                try:
+                    metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["biosample_term_name"] + "\t")
+                except KeyError:
+                    metadata.write(exp_dict["biosample_term_name"] + "\t")
 
                 # Bio_Sample
-                metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["biosample_type"] + "\t")
+                try:
+                    metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["biosample_type"] + "\t")
+                except KeyError:
+                     metadata.write(exp_dict["biosample_type"] + "\t")
 
                 # Target
-                if "target" in exp_dict["files"][i]["replicate"]["experiment"]:
+                try:
                     metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["target"]["label"] + "\t")
-
-                else:
+                except KeyError:
                     metadata.write("Not Listed" + "\t")
 
                 # Assembly
-                metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["assembly"][0] + "\t")
+                try:
+                     metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["assembly"][0] + "\t")
+                except (KeyError, IndexError):
+                     metadata.write(exp_dict["files"][i]["assembly"] + "\t")
 
                 # Lab
-                metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["lab"]["title"] + "\t")
+                try:
+                    metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["lab"]["title"] + "\t")
+                except KeyError:
+                    metadata.write(exp_dict["files"][i]["lab"]["title"] + "\t")
 
                 # Date
-                metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["date_released"] + "\t")
+                try:
+                    metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["date_released"] + "\t")
+                except KeyError:
+                    metadata.write(exp_dict["files"][i]["date_created"] + "\t")
 
                 # Version
                 Version = data_dict["Version"] = "1"
@@ -104,14 +124,16 @@ with open('bam_metadata_encode.tsv', 'w') as metadata:
                 metadata.write(elem + "\t")
 
                 # Sequencer
-                if "platform" not in exp_dict["files"][i]:
+                try:
                     metadata.write("Not Listed" + "\t")
-
-                else:
+                except KeyError:
                     metadata.write(exp_dict["files"][i]["platform"]["title"] + "\t")
 
                 # Run_Type
-                metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["run_type"] + "\t")
+                try:
+                    metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["run_type"] + "\t")
+                except KeyError:
+                    metadata.write(exp_dict["run_type"] + "\t")
 
                 # File_Type
                 metadata.write(exp_dict["files"][i]["file_format"] + "\t")
