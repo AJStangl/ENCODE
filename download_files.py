@@ -1,4 +1,9 @@
 __author__ = 'AJ'
+'''
+This function will access all files in the the enncode database, retreive the download
+url's in the the metadata file and download the files to the local directory.
+'''
+
 import urllib
 import csv
 
