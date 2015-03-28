@@ -4,8 +4,7 @@ This function will access all files in the the enncode database, retreive the do
 url's in the the metadata file and download the files to the local directory.
 '''
 
-import urllib
-import csv
+import urllib,csv
 
 with open("bam_metadata_encode.tsv", 'r') as infile:
     infile = csv.reader(infile, delimiter='\t')
