@@ -29,7 +29,7 @@ for elem in exp_list:
 
 '''The above code constructs a list of all urls (exp_url that will be used for data extraction'''
 
-with open('bam_metadata_encode.tsv', 'w') as metadata:
+with open('bam_metadata_encode.txt', 'w') as metadata:
     metadata.write(
         "Filename\tName\tDescription\tAssay\tCell_Type\tBio_Sample\tTarget\tAssembly\tLab\tDate\tVersion\tSource"
         "\tDownload_Link\tSource_Link\tSequencer\tRun_Type\tFile_Type\tFile_Size\n")
