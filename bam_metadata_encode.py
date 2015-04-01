@@ -2,7 +2,7 @@ __author__ = 'AJ'
 import requests
 
 '''
-This script interates through encode experiments and write out a metadata file for all bam experiments on endcode
+This script iterates through encode experiments and write out a metadata file for all bam experiments on endcode
 '''
 HEADERS = {'accept': 'application/json'}
 
@@ -34,7 +34,7 @@ with open('bam_metadata_encode.txt', 'w') as metadata:
         "Filename\tName\tDescription\tAssay\tCell_Type\tBio_Sample\tTarget\tAssembly\tLab\tDate\tVersion\tSource"
         "\tDownload_Link\tSource_Link\tSequencer\tRun_Type\tFile_Type\tBiosample_term_id\tFile_Size\n")
 
-    for elem in exp_url[0:10]:  # Testing Center
+    for elem in exp_url:  # Testing Center
         response = requests.get(elem, headers=HEADERS)
 
         exp_dict = response.json()
@@ -42,7 +42,7 @@ with open('bam_metadata_encode.txt', 'w') as metadata:
         i = 0
 
         while i < len(exp_dict["files"]):
-            if exp_dict["files"][i]["file_format"] == "bam":
+            if exp_dict["files"][i]["file_format"] == "bam" and exp_dict["files"][i]["assembly"] == "hg19":
                 # Initialize data_dict and data_dict keys if the file format is bam
                 data_dict = {}
 
@@ -140,7 +140,11 @@ with open('bam_metadata_encode.txt', 'w') as metadata:
                 metadata.write(exp_dict["files"][i]["file_format"] + "\t")
 
                 # Biosample_Term_ID
-                metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["biosample_term_id"] + "\t")
+                try:
+                    metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["biosample_term_id"] + "\t")
+                except KeyError:
+                    metadata.write(exp_dict["biosample_term_id"] + "\t")
+
 
                 # File_Size
                 fsize = (exp_dict["files"][i]["file_size"]*9.5367431640625e-07)
