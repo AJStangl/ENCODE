@@ -1,7 +1,7 @@
 import requests
 
 HEADERS = {'accept': 'application/json'}
-URL = "https://www.encodeproject.org/experiments/ENCSR000ASW/"
+URL = "https://www.encodeproject.org/experiments/ENCSR000CVM"
 response = requests.get(URL, headers=HEADERS)
 
 exp_dict = response.json()
@@ -14,14 +14,15 @@ i = 0
 limit = len(exp_dict["files"])
 while i < limit:
     if exp_dict["files"][i]["file_format"] == "bam":
-        # for k,v in exp_dict["files"][i].iteritems():
-        #     print k
-        #     print v
-        #     print "\n"
-        print exp_dict["files"][i]["accession"]
-        print exp_dict["files"][i]["file_size"]*9.5367431640625e-07
+        for k , v in exp_dict["files"][i]["replicate"]["experiment"].iteritems():
+             print k
+             print v
+             print "\n"
+        print "######"
 
-        print ("#########")
-        print ("\n")
+    
+        
 
     i = i + 1
+
+
