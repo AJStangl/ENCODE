@@ -1,156 +1,163 @@
 __author__ = 'AJ'
 import requests
+def bam_metadata_econde():
+    '''
+    This script iterates through encode experiments and write out a metadata file for all bam experiments on endcode
 
-'''
-This script iterates through encode experiments and write out a metadata file for all bam experiments on endcode
-'''
-HEADERS = {'accept': 'application/json'}
+    Input: None
 
-URL = "https://www.encodeproject.org/search/?searchTerm=%s&type=%s&limit=%s" % ("human", "experiment", "all")
+    Output: A TXT file (TSV) that contains the metadata for each experiment
 
-response = requests.get(URL, headers=HEADERS)
+    Return: None
+    '''
+    HEADERS = {'accept': 'application/json'}
 
-encode_dict = response.json()
+    URL = "https://www.encodeproject.org/search/?searchTerm=%s&type=%s&limit=%s" % ("human", "experiment", "all")
 
-exp_list = []
+    response = requests.get(URL, headers=HEADERS)
 
-graph = encode_dict["@graph"]
+    encode_dict = response.json()
 
-for elem in graph:
-    for k in elem:
-        if elem["@id"] not in exp_list:
-            exp_list.append(elem["@id"])
+    exp_list = []
 
-base_url = "https://www.encodeproject.org"
+    graph = encode_dict["@graph"]
 
-exp_url = []
-for elem in exp_list:
-    exp_url.append(base_url + elem)
+    for elem in graph:
+        for k in elem:
+            if elem["@id"] not in exp_list:
+                exp_list.append(elem["@id"])
 
-'''The above code constructs a list of all urls (exp_url that will be used for data extraction'''
+    base_url = "https://www.encodeproject.org"
 
-with open('bam_metadata_encode.txt', 'w') as metadata:
-    metadata.write(
-        "Filename\tName\tDescription\tAssay\tCell_Type\tBio_Sample\tTarget\tAssembly\tLab\tDate\tVersion\tSource"
-        "\tDownload_Link\tSource_Link\tSequencer\tRun_Type\tFile_Type\tBiosample_term_id\tFile_Size\n")
+    exp_url = []
+    for elem in exp_list:
+        exp_url.append(base_url + elem)
 
-    for elem in exp_url:  # Testing Center
-        response = requests.get(elem, headers=HEADERS)
+    '''The above code constructs a list of all urls (exp_url that will be used for data extraction'''
 
-        exp_dict = response.json()
+    with open('bam_metadata_encode.txt', 'w') as metadata:
+        metadata.write(
+            "Filename\tName\tDescription\tAssay\tCell_Type\tBio_Sample\tTarget\tAssembly\tLab\tDate\tVersion\tSource"
+            "\tDownload_Link\tSource_Link\tSequencer\tRun_Type\tFile_Type\tBiosample_term_id\tFile_Size\n")
 
-        i = 0
+        for elem in exp_url:  # Testing Center
+            response = requests.get(elem, headers=HEADERS)
 
-        while i < len(exp_dict["files"]):
-            if exp_dict["files"][i]["file_format"] == "bam" and exp_dict["files"][i]["assembly"] == "hg19":
-                # Initialize data_dict and data_dict keys if the file format is bam
-                data_dict = {}
+            exp_dict = response.json()
 
-                data_dict.fromkeys(
-                    ["Filename", "Name", "Description", "Version", "Lab", "Assay", "Cell_Type", "Bio_Sample",
-                     "Target", "Assembly", "Date", "Source", "Download_Link", "Source_Link", "Sequencer", "Run_Type",
-                     "File_Type", "file_size", "biosample_term_id"])
+            i = 0
 
-                # Start Data Extraction
-                #######################################################################################################
+            while i < len(exp_dict["files"]):
+                if exp_dict["files"][i]["file_format"] == "bam" and exp_dict["files"][i]["assembly"] == "hg19":
+                    # Initialize data_dict and data_dict keys if the file format is bam
+                    data_dict = {}
 
-                # Filename
-                data_dict["Filename"] = exp_dict["files"][i]["href"]
-                filename = data_dict["Filename"]
-                temp = filename.split("/")
-                metadata.write(temp[4] + "\t")
+                    data_dict.fromkeys(
+                        ["Filename", "Name", "Description", "Version", "Lab", "Assay", "Cell_Type", "Bio_Sample",
+                         "Target", "Assembly", "Date", "Source", "Download_Link", "Source_Link", "Sequencer",
+                         "Run_Type", "File_Type", "file_size", "biosample_term_id"])
 
-                # Name
-                metadata.write(exp_dict["accession"] + "\t")
+                    # Start Data Extraction
+                    ###################################################################################################
 
-                # Description
-                try:
-                    metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["description"] + "\t")
-                except KeyError:
-                    metadata.write(exp_dict["description"] + "\t")
+                    # Filename
+                    data_dict["Filename"] = exp_dict["files"][i]["href"]
+                    filename = data_dict["Filename"]
+                    temp = filename.split("/")
+                    metadata.write(temp[4] + "\t")
 
-                # Assay
-                try:
-                    metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["assay_term_name"] + "\t")
-                except KeyError:
-                    metadata.write(exp_dict["assay_term_name"] + "\t")
+                    # Name
+                    metadata.write(exp_dict["accession"] + "\t")
 
-                # Cell_Type
-                try:
-                    metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["biosample_term_name"] + "\t")
-                except KeyError:
-                    metadata.write(exp_dict["biosample_term_name"] + "\t")
+                    # Description
+                    try:
+                        metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["description"] + "\t")
+                    except KeyError:
+                        metadata.write(exp_dict["description"] + "\t")
 
-                # Bio_Sample
-                try:
-                    metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["biosample_type"] + "\t")
-                except KeyError:
-                    metadata.write(exp_dict["biosample_type"] + "\t")
+                    # Assay
+                    try:
+                        metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["assay_term_name"] + "\t")
+                    except KeyError:
+                        metadata.write(exp_dict["assay_term_name"] + "\t")
 
-                # Target
-                try:
-                    metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["target"]["label"] + "\t")
-                except KeyError:
-                    metadata.write("Not Listed" + "\t")
+                    # Cell_Type
+                    try:
+                        metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["biosample_term_name"] + "\t")
+                    except KeyError:
+                        metadata.write(exp_dict["biosample_term_name"] + "\t")
 
-                # Assembly
-                try:
-                    metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["assembly"][0] + "\t")
-                except (KeyError, IndexError):
-                    metadata.write(exp_dict["files"][i]["assembly"] + "\t")
+                    # Bio_Sample
+                    try:
+                        metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["biosample_type"] + "\t")
+                    except KeyError:
+                        metadata.write(exp_dict["biosample_type"] + "\t")
 
-                # Lab
-                try:
-                    metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["lab"]["title"] + "\t")
-                except KeyError:
-                    metadata.write(exp_dict["files"][i]["lab"]["title"] + "\t")
+                    # Target
+                    try:
+                        metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["target"]["label"] + "\t")
+                    except KeyError:
+                        metadata.write("Not Listed" + "\t")
 
-                # Date
-                try:
-                    metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["date_released"] + "\t")
-                except KeyError:
-                    metadata.write(exp_dict["files"][i]["date_created"] + "\t")
+                    # Assembly
+                    try:
+                        metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["assembly"][0] + "\t")
+                    except (KeyError, IndexError):
+                        metadata.write(exp_dict["files"][i]["assembly"] + "\t")
 
-                # Version
-                Version = data_dict["Version"] = "1"
-                metadata.write(Version + "\t")
+                    # Lab
+                    try:
+                        metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["lab"]["title"] + "\t")
+                    except KeyError:
+                        metadata.write(exp_dict["files"][i]["lab"]["title"] + "\t")
 
-                # Source
-                metadata.write(exp_dict["award"]["project"] + "\t")
+                    # Date
+                    try:
+                        metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["date_released"] + "\t")
+                    except KeyError:
+                        metadata.write(exp_dict["files"][i]["date_created"] + "\t")
 
-                # Download_Link
-                metadata.write("https://www.encodeproject.org" + exp_dict["files"][i]["href"] + "\t")
+                    # Version
+                    Version = data_dict["Version"] = "1"
+                    metadata.write(Version + "\t")
 
-                # Source_Link
-                metadata.write(elem + "\t")
+                    # Source
+                    metadata.write(exp_dict["award"]["project"] + "\t")
 
-                # Sequencer
-                try:
-                    metadata.write("Not Listed" + "\t")
-                except KeyError:
-                    metadata.write(exp_dict["files"][i]["platform"]["title"] + "\t")
+                    # Download_Link
+                    metadata.write("https://www.encodeproject.org" + exp_dict["files"][i]["href"] + "\t")
 
-                # Run_Type
-                try:
-                    metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["run_type"] + "\t")
-                except KeyError:
-                    metadata.write(exp_dict["run_type"] + "\t")
+                    # Source_Link
+                    metadata.write(elem + "\t")
 
-                # File_Type
-                metadata.write(exp_dict["files"][i]["file_format"] + "\t")
+                    # Sequencer
+                    try:
+                        metadata.write("Not Listed" + "\t")
+                    except KeyError:
+                        metadata.write(exp_dict["files"][i]["platform"]["title"] + "\t")
 
-                # Biosample_Term_ID
-                try:
-                    metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["biosample_term_id"] + "\t")
-                except KeyError:
-                    metadata.write(exp_dict["biosample_term_id"] + "\t")
+                    # Run_Type
+                    try:
+                        metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["run_type"] + "\t")
+                    except KeyError:
+                        metadata.write(exp_dict["run_type"] + "\t")
+
+                    # File_Type
+                    metadata.write(exp_dict["files"][i]["file_format"] + "\t")
+
+                    # Biosample_Term_ID
+                    try:
+                        metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["biosample_term_id"] + "\t")
+                    except KeyError:
+                        metadata.write(exp_dict["biosample_term_id"] + "\t")
 
 
-                # File_Size
-                fsize = (exp_dict["files"][i]["file_size"]*9.5367431640625e-07)
-                metadata.write(str(fsize) + "\t")
+                    # File_Size
+                    fsize = (exp_dict["files"][i]["file_size"]*9.5367431640625e-07)
+                    metadata.write(str(fsize) + "\t")
 
-                # End of Metadata File Entry
-                metadata.write("\n")
+                    # End of Metadata File Entry
+                    metadata.write("\n")
 
-            i = i + 1
+                i = i + 1
+    return
