@@ -71,15 +71,27 @@ def bam_metadata_econde():
 
                     # Description
                     try:
-                        metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["description"] + "\t")
+                        if exp_dict["files"][i]["replicate"]["experiment"]["description"] != "":
+                            metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["description"].replace("\n","").replace("\r","") + "\t")
+                        else:
+                            metadata.write("Not Listed" + "\t")
                     except KeyError:
-                        metadata.write(exp_dict["description"] + "\t")
+                        if exp_dict["description"] != "":
+                            metadata.write(exp_dict["description"] + "\t")
+                        else:
+                            metadata.write("Not Listed" + "\t")
 
                     # Assay
                     try:
-                        metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["assay_term_name"] + "\t")
+                        if exp_dict["files"][i]["replicate"]["experiment"]["assay_term_name"] != "":
+                            metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["assay_term_name"] + "\t")
+                        else:
+                            metadata.write("Not Listed" + "\t")
                     except KeyError:
-                        metadata.write(exp_dict["assay_term_name"] + "\t")
+                        if exp_dict["assay_term_name"] != "":
+                            metadata.write(exp_dict["assay_term_name"] + "\t")
+                        else:
+                            metadata.write("Not Listed" + "\t")
 
                     # Cell_Type
                     try:
@@ -161,3 +173,4 @@ def bam_metadata_econde():
 
                 i = i + 1
     return
+bam_metadata_econde()

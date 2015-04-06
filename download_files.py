@@ -17,14 +17,18 @@ def download_bam(metadata):
         infile = csv.reader(infile, delimiter='\t')
 
         url = []
-
+        # Places URL for Download into URL list without adding the header
         for row in infile:
             if row[12] != "Download_Link":
                 url.append(row[12])
 
+        # Splits the elem in the URL list and retrieves the last elem corresponding to the file name
+        # Requies a filename(fname) and download url(elem)
         for elem in url:
             fname = elem.split("/")
             fname = fname[-1]
             urllib.urlretrieve(elem, fname)
+
     return
 
+download_bam("bam_metadata_encode.txt")
