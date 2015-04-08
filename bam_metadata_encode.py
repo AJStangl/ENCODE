@@ -37,10 +37,10 @@ def bam_metadata_econde():
 
     with open('bam_metadata_encode.txt', 'w') as metadata:
         metadata.write(
-            "Filename\tName\tDescription\tAssay\tCell_Type\tBio_Sample\tTarget\tAssembly\tLab\tDate\tVersion\tSource"
-            "\tDownload_Link\tSource_Link\tSequencer\tRun_Type\tFile_Type\tBiosample_term_id\tFile_Size\n")
+            "Filename\tName\tDescription\tAssay\tReplicate\tCell_Type\tBio_Sample\tTarget\tAssembly\tLab\tDate\tVersion"
+            "\tSource\tDownload_Link\tSource_Link\tSequencer\tRun_Type\tFile_Type\tBiosample_term_id\tFile_Size\n")
 
-        for elem in exp_url:  # Testing Center
+        for elem in exp_url[0:5]:  # Testing Center - Enter number of elements from the exp_ur list [X:Y]
             response = requests.get(elem, headers=HEADERS)
 
             exp_dict = response.json()
@@ -49,7 +49,7 @@ def bam_metadata_econde():
 
             while i < len(exp_dict["files"]):
                 if exp_dict["files"][i]["file_format"] == "bam" and exp_dict["files"][i]["assembly"] == "hg19":
-                    # Initialize data_dict and data_dict keys if the file format is bam
+                    # Initialize data_dict and data_dict keys if the file format is bam and is aligned to HG19 reference
                     data_dict = {}
 
                     data_dict.fromkeys(
@@ -92,6 +92,13 @@ def bam_metadata_econde():
                             metadata.write(exp_dict["assay_term_name"] + "\t")
                         else:
                             metadata.write("Not Listed" + "\t")
+
+                    # Replicate
+                    try:
+                        metadata.write(str(exp_dict["files"][i]["replicate"]["biological_replicate_number"]) + "\t")
+
+                    except KeyError:
+                        metadata.write("Not Listed" + "\t")
 
                     # Cell_Type
                     try:

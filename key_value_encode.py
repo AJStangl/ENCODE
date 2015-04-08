@@ -1,7 +1,7 @@
 import requests
 
 HEADERS = {'accept': 'application/json'}
-URL = "https://www.encodeproject.org/experiments/ENCSR000EMS/"
+URL = "https://www.encodeproject.org/experiments/ENCSR000ASW/"
 response = requests.get(URL, headers=HEADERS)
 
 exp_dict = response.json()
@@ -12,17 +12,14 @@ exp_dict = response.json()
 """Test for keys and values in files sub key"""
 i = 0
 limit = len(exp_dict["files"])
+
+
+
 while i < limit:
     if exp_dict["files"][i]["file_format"] == "bam":
-        for k , v in exp_dict.iteritems():
-             print k
-             print v
-             print "\n"
-        print "######"
-
-    
+        print exp_dict["files"][i]["replicate"]["biological_replicate_number"]
         
-
+        print "######"
     i = i + 1
 
 
