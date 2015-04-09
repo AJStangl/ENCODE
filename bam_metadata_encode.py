@@ -37,10 +37,11 @@ def bam_metadata_econde():
 
     with open('bam_metadata_encode.txt', 'w') as metadata:
         metadata.write(
-            "Filename\tName\tDescription\tAssay\tReplicate\tCell_Type\tBio_Sample\tTarget\tAssembly\tLab\tDate\tVersion"
-            "\tSource\tDownload_Link\tSource_Link\tSequencer\tRun_Type\tFile_Type\tBiosample_term_id\tFile_Size\n")
+            "Name\tExperiment_Name\tDescription\tAssay\tReplicate\tCell_Type\tBio_Sample\tTarget\tAssembly\tLab\tDate"
+            "\tVersion\tSource\tDownload_Link\tSource_Link\tSequencer\tRun_Type\tFile_Type\tBiosample_term_id"
+            "\tFile_Size\n")
 
-        for elem in exp_url:  # Testing Center - Enter number of elements from the exp_ur list [X:Y]
+        for elem in exp_url[0:5]:  # Testing Center - Enter number of elements from the exp_ur list [X:Y]
             response = requests.get(elem, headers=HEADERS)
 
             exp_dict = response.json()
@@ -55,7 +56,7 @@ def bam_metadata_econde():
                     data_dict.fromkeys(
                         ["Filename", "Name", "Description", "Assay", "Replicate", "Cell_type", "Bio_Sample", "Target",
                          "Assembly", "Lab", "Date", "Version", "Source", "Download_Link", "Source_Link", "Sequencer",
-                         "Run_Type", "File_Type", "Biosample_term_id", "File_Size"]
+                         "Run_Type", "File_Type", "Biosample_term_id", "File_Size"])
 
                     # Start Data Extraction
                     ###################################################################################################
@@ -173,7 +174,8 @@ def bam_metadata_econde():
 
                     # File_Size
                     fsize = (exp_dict["files"][i]["file_size"]*9.5367431640625e-07)
-                    metadata.write(str(fsize) + "\t")
+                    # metadata.write(str(fsize) + "\t")
+                    metadata.write(str(fsize))
 
                     # End of Metadata File Entry
                     metadata.write("\n")
