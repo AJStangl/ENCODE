@@ -9,7 +9,7 @@ def tsv_to_json(metadata):
     :return: A json object of the metadata file
     """
     import csv
-    # save the json output as emp.json
+    # save the json output as test.json
 
     genome_id = str(25577)
     jsfile = file('test.json', 'w')
