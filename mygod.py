@@ -1,53 +1,61 @@
 __author__ = 'AJ'
-import json, csv, pprint
+import json, csv, os, requests, urllib
 
 
-'''['Name', 'Experiment_Name', 'Description', 'Assay', 'Replicate', 'Cell_Type', 'Bio_Sample', 'Target', 'Assembly',
-'Lab', 'Date', 'Version', 'Source', 'Download_Link', 'Source_Link', 'Sequencer', 'Run_Type', 'File_Type',
-'Biosample_term_id', 'File_Size']'''
+class JsonObject:
 
-class Fields:
+    def __init__(self):
 
-    def __init__(self, genome_id, version, description, name, source):
-        self.genome_id = genome_id
-        self.version = version
-        self.source = source
-        self.description = description
-        self.name = name
+        with open("bam_metadata_encode.txt", "r") as infile:
 
-class metadata:
-    def __init__(self, ):
-        self.metadata = metadata
+            headings = next(infile)
+            reader = csv.reader(infile, delimiter='\t')
+            i = 0
+            for row in reader:
 
+                metadata = [{"link": row[14], "file_type": row[17]}]
 
+                items = [{"path": row[13], "type": "http"}]
 
-with open("bam_metadata_encode.txt", "r") as infile:
-    headings = next(infile)
-    headings = headings.replace('\n', '')
-    headings = headings.split("\t")
+                temp = RowObject(row[2], str(25577), metadata, items, row[0], row[12], row[11])
+
+                with open("jsons/" + str(i) + ".json", "w") as outfile:
+
+                    outfile.write(json.dumps(temp.__dict__))
+                i += 1
 
 
-    reader = csv.reader(infile, delimiter='\t')
-    row_count = len(list(reader))
-    ite = 0
-    infile.seek(0)
-    exp_list= []
+class RowObject:
 
-    for headings in reader:
-        ite += 1
+        def __init__(self, desc, gnm_id, metadata, items, name, source_name, version):
+            self.description = desc
+            self.genome_id = gnm_id
+            self.items = items
+            self.metadata = metadata
+            self.name = name
+            self.source_name = source_name
+            self.version = version
 
-        exp_list.append(Fields(25577, headings[11], headings[2], headings[0], headings[12]))
+def sendJSONObjects():
 
-#
-jsfile = file('test.json', 'w')
-i = 1
-while i < len(exp_list):
-    jsfile.write(json.dumps(exp_list[1].__dict__))
+    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+    base_url = "http://www.trinnovation.org/temp.php"
+    #
+    # for file in os.listdir(os.getcwd() + "\jsons"):
+    #
+    #     tr = ""
+    #     with open(os.getcwd() + r'\jsons\\' + file) as jfile:
+    #         tr = json.load(jfile)
+    #
+    #
+    #     resp = requests.post(base_url, headers=HEADERS, data=tr)
+    #     print resp.status_code
 
-    i = i + 1
-jsfile.close()
+    data = {'value': '7.4', 'decay_time': '300'}
+    resp = requests.post(base_url, data=json.dumps(data))
+    print resp.status_code
 
-
-
+JsonObject()
+sendJSONObjects()
 
 
