@@ -1,4 +1,5 @@
 __author__ = 'AJ'
+from create_json import JsonObject  # Imports JSON Object for upload to CoGe
 
 def auth_token(username, password):
     """
@@ -8,7 +9,7 @@ def auth_token(username, password):
     :param password: The password for your iplant account
     :return: None
     """
-    import requests, json, urllib2
+    import requests
 
     base_url = "https://genomevolution.org/coge/api/v1/"
     auth_url = "https://foundation.iplantcollaborative.org/auth-v1/"
@@ -20,16 +21,14 @@ def auth_token(username, password):
     r = requests.post(auth_url, auth=(username, password))
     auth_dict = r.json()
     token = auth_dict["result"]["token"]
-
-
-
-
     return token
 
 token = auth_token("ajstangl", "Bio Informatics1")
-metadata = "bam_metadata_encode.txt"
+metadata = JsonObject().add_data()
+
 
 def experiment_add(username, token, metadata):
+
     '''
     This function will take in a meta data file, iterate through the column in the TSV file and upload experiment
     to CoGe from ENCODE. It will check for current download state, append a list for successful uploads and failure
@@ -37,27 +36,21 @@ def experiment_add(username, token, metadata):
 
     :param username: Username for iPlant Account
     :param token: Token for Requests that is returned from auth_token()
-    :param metadata: Metadata file in tsv form (named bam_metadata_encode.txt)
+    :param metadata: List of Json Objects )
     :return: None
     '''
-    import requests, json, urllib2, csv
-    gid = "25577" # HG19 Genome ID
 
-    download_url = []
+    import requests, json, urllib2, csv
+
+
+
     base_url = "https://genomevolution.org/coge/api/v1/experiments?username=%s&token=%s" % (username, token)
     r = requests.get(base_url)
-    print r.status_code
-
-    # token = open(metadata, "r")
-    # metadata = csv.reader(metadata, delimiter="\t")
-    # for row in metadata:
-    #     print row
+    print r.response
+    print metadata[0]
+experiment_add("ajstangl", token, metadata)
 
 
-
-
-
-experiment_add("ajstangl",token, metadata)
 
 
 
