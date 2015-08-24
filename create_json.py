@@ -41,9 +41,9 @@ class JsonObject:
 
                 temp = RowObject(row[2], str(25577), metadata, source_data, row[0], row[12], row[11])
 
-                # with open("jsons/" + row[0] + ".json", "w") as outfile:
-                data.append(json.dumps(temp.__dict__))
-                    # outfile.write(json.dumps(temp.__dict__))
+                with open("jsons/" + row[0] + ".json", "w") as outfile:
+                    data.append(json.dumps(temp.__dict__))
+                    outfile.write(json.dumps(temp.__dict__))
                 i += 1
             return data
 
@@ -64,7 +64,7 @@ class RowObject:
         return
 
 
-# JsonObject().add_data()
+JsonObject().add_data()
 
 
 
