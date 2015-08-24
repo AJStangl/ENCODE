@@ -182,4 +182,4 @@ def bam_metadata_enconde():
 
                 i = i + 1
     return
-bam_metadata_econde()
+bam_metadata_enconde()
