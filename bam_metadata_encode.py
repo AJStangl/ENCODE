@@ -1,6 +1,6 @@
 __author__ = 'AJ'
 import requests
-def bam_metadata_enconde():
+def bam_metadata_encode():
     '''
     This script iterates through encode experiments and write out a metadata file for all bam experiments on endcode
 
@@ -12,8 +12,8 @@ def bam_metadata_enconde():
     '''
     HEADERS = {'accept': 'application/json'}
 
-    URL = "https://www.encodeproject.org/search/?searchTerm=%s&type=%s&limit=%s" % ("human", "experiment", "all")
-
+    # URL = "https://www.encodeproject.org/search/?searchTerm=%s&type=%s&limit=%s" % ("human", "experiment", "all")
+    URL = "https://www.encodeproject.org/search/?searchTerm=human&type=experiment&limit=all"
     response = requests.get(URL, headers=HEADERS)
 
     encode_dict = response.json()
@@ -41,15 +41,16 @@ def bam_metadata_enconde():
             "\tVersion\tSource\tDownload_Link\tSource_Link\tSequencer\tRun_Type\tFile_Type\tBiosample_term_id"
             "\tFile_Size\n")
 
-        for elem in exp_url[0:5]:  # Testing Center - Enter number of elements from the exp_ur list [X:Y]
+        for elem in exp_url[0:100]:  # Testing Center - Enter number of elements from the exp_url list [X:Y]
             response = requests.get(elem, headers=HEADERS)
-
             exp_dict = response.json()
-
             i = 0
+            #print len(exp_dict["files"])
+            #print exp_dict["files"][i]["file_type"]
 
             while i < len(exp_dict["files"]):
-                if exp_dict["files"][i]["file_format"] == "bam" and exp_dict["files"][i]["assembly"] == "hg19":
+                if exp_dict["files"][i]["file_type"] == "bam":
+
                     # Initialize data_dict and data_dict keys if the file format is bam and is aligned to HG19 reference
                     data_dict = {}
 
@@ -123,7 +124,7 @@ def bam_metadata_enconde():
                     try:
                         metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["assembly"][0] + "\t")
                     except (KeyError, IndexError):
-                        metadata.write(exp_dict["files"][i]["assembly"] + "\t")
+                        metadata.write("not listed" + "\t")
 
                     # Lab
                     try:
@@ -160,7 +161,7 @@ def bam_metadata_enconde():
                     try:
                         metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["run_type"] + "\t")
                     except KeyError:
-                        metadata.write(exp_dict["run_type"] + "\t")
+                        metadata.write("not listed" + "\t")
 
                     # File_Type
                     metadata.write(exp_dict["files"][i]["file_format"] + "\t")
@@ -181,5 +182,7 @@ def bam_metadata_enconde():
                     metadata.write("\n")
 
                 i = i + 1
+
     return
-bam_metadata_enconde()
+
+bam_metadata_encode()
