@@ -1,6 +1,6 @@
 __author__ = 'AJ'
 import requests
-def bam_metadata_econde():
+def bam_metadata_enconde():
     '''
     This script iterates through encode experiments and write out a metadata file for all bam experiments on endcode
 

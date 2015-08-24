@@ -37,9 +37,9 @@ class JsonObject:
                             "cell_type": row[5], "lab": row[9], "date": row[10], "assembly": row[8],
                             "run_type": row[16], "biosample_term_id": row[18]}]
 
-                items = [{"path": row[13], "type": "http"}]
+                source_data = [{"path": row[13], "type": "http"}]
 
-                temp = RowObject(row[2], str(25577), metadata, items, row[0], row[12], row[11])
+                temp = RowObject(row[2], str(25577), metadata, source_data, row[0], row[12], row[11])
 
                 # with open("jsons/" + row[0] + ".json", "w") as outfile:
                 data.append(json.dumps(temp.__dict__))
@@ -53,10 +53,10 @@ class RowObject:
     This is a sub-class that creates the fields for the metadata file that will be used in the json object class
     '''
 
-    def __init__(self, desc, gnm_id, metadata, items, name, source_name, version):
+    def __init__(self, desc, gnm_id, metadata, source_data, name, source_name, version):
         self.description = desc
         self.genome_id = gnm_id
-        self.items = items
+        self.source_data = source_data
         self.metadata = metadata
         self.name = name
         self.source_name = source_name
