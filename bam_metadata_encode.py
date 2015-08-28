@@ -13,7 +13,7 @@ def bam_metadata_encode():
     HEADERS = {'accept': 'application/json'}
 
     # URL = "https://www.encodeproject.org/search/?searchTerm=%s&type=%s&limit=%s" % ("human", "experiment", "all")
-    URL = "https://www.encodeproject.org/search/?searchTerm=human&type=experiment&limit=all"
+    URL = "https://www.encodeproject.org/search/?searchTerm=human&type=experiment&limit=all&assay_term_name=RNA-seq"
     response = requests.get(URL, headers=HEADERS)
 
     encode_dict = response.json()
@@ -41,7 +41,7 @@ def bam_metadata_encode():
             "\tVersion\tSource\tDownload_Link\tSource_Link\tSequencer\tRun_Type\tFile_Type\tBiosample_term_id"
             "\tFile_Size\n")
 
-        for elem in exp_url[0:100]:  # Testing Center - Enter number of elements from the exp_url list [X:Y]
+        for elem in exp_url:  # Testing Center - Enter number of elements from the exp_url list [X:Y]
             response = requests.get(elem, headers=HEADERS)
             exp_dict = response.json()
             i = 0
