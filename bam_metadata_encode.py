@@ -45,8 +45,7 @@ def bam_metadata_encode():
             response = requests.get(elem, headers=HEADERS)
             exp_dict = response.json()
             i = 0
-            #print len(exp_dict["files"])
-            #print exp_dict["files"][i]["file_type"]
+
 
             while i < len(exp_dict["files"]):
                 if exp_dict["files"][i]["file_type"] == "bam":
