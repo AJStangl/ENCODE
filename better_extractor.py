@@ -4,7 +4,7 @@ HEADERS = {'accept': 'application/json'}
 
 def get_exp_url():
 
-
+    # Currently For RNA Seq Data
     """
     This script will take in a URL from encode and return a list of experiment URLS
     :return: exp_url_list
