@@ -17,34 +17,35 @@ class JsonObject:
 
     def add_data(self):
         # Opens the metadata file and writes the json object file
-        with open("bam_metadata_encode.txt", "r") as infile:
+        with open("all_bam_metadata_encode.txt", "r") as infile:
 
             headings = next(infile)
             reader = csv.reader(infile, delimiter='\t')
             i = 0
+            data = []
             for row in reader:
-                data = []
-                '''need to fix to pull from meta data tsv'''
 
-
-                metadata = {"restricted": True, "name": row[0], "description": row[2], "version": row[11],
+                metadata = {"restricted": True, "name": row[0], "description": row[2], "version": row[13],
                             "source_name": "Encode"}
 
-                additional_metadata = [{"Date": row[10], "link": row[14]}]
+                additional_metadata = [{"Date": row[12], "link": row[16]}]
+
+                source_data = [{"type": "http","path": row[15]}]
+
+                temp = RowObject(int(26225), metadata, source_data, additional_metadata)
 
 
-                source_data = [{"type": "http","path": row[13]}]
+                # with open("jsons/" + row[0] + ".json", "w") as outfile:
+                    # data.append(json.dumps(temp.__dict__))
+                data.append(json.dumps(temp.__dict__))
 
-                temp = RowObject(int(25577), metadata, source_data, additional_metadata)
-
-                with open("jsons/" + row[0] + ".json", "w") as outfile:
-                    data.append(json.dumps(temp.__dict__))
-                    outfile.write(json.dumps(temp.__dict__))
                 i += 1
+
             return data
 
 
 class RowObject:
+
     '''
     This is a sub-class that creates the fields for the metadata file that will be used in the json object class
     '''
@@ -55,6 +56,5 @@ class RowObject:
         self.metadata = metadata
         self.additional_metadata = additional_metadata
         return
-
 
 JsonObject().add_data()

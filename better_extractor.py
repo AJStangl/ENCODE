@@ -8,8 +8,10 @@ def get_exp_url():
     :return: exp_url_list
     """
     base_url = "https://www.encodeproject.org/"
-   # search = "search/?type=experiment&assay_term_name=RNA-seq&assembly=hg19&limit=all"
-    search = "/search/?type=experiment&assembly=hg19&limit=all"
+    #search = "search/?type=experiment&assay_term_name=RNA-seq&assembly=hg19&limit=all"
+    #search = "/search/?type=experiment&assembly=hg19&limit=all"
+    #search = "/search/?searchTerm=EFO%3A0002784&type=experiment&assay_term_name=RNA-seq&status=released&assembly=hg19"
+    search = "/search/?searchTerm=EFO%3A0002784&type=experiment&assay_term_name=ChIP-seq&assembly=hg19&status=released"
     url = base_url+search
     r = requests.get(url, headers=HEADERS)
 
@@ -43,7 +45,7 @@ def metadata_extractor(exp_url_list):
     with open('all_bam_metadata_encode.txt', 'w') as metadata:
         metadata.write(
             "Name\tExperiment_Name\tDescription\tAssay\tBiological_Replicate\tTechnical_Replicate\t"
-            "Cell_Type\tBio_Sample\tTarget\tAssembly\tLab\tDate"
+            "Cell_Type\tBio_Sample\tTarget\tAssembly\tGenome_Annotation\tOutput_Type\tLab\tDate"
             "\tVersion\tSource\tDownload_Link\tSource_Link\tSequencer\tRun_Type\tFile_Type\tBiosample_term_id"
             "\tFile_Size\n")
 
@@ -53,8 +55,8 @@ def metadata_extractor(exp_url_list):
 
             i = 0
 
-            while i < len(exp_dict["files"]):
-                if exp_dict["files"][i]["file_type"] == "bam" and exp_dict["files"][i]["output_type"] == "alignments":
+            while i < len(exp_dict["files"]): # Checks to see if annotation is present
+                if exp_dict["files"][i]["file_type"] == "bam": #and exp_dict["files"][i]["output_type"] == "alignments":
 
 
                     # Initialize data_dict and data_dict keys if the file format is bam and is aligned to HG19 reference
@@ -63,8 +65,8 @@ def metadata_extractor(exp_url_list):
                     data_dict.fromkeys(
                         ["Filename", "Name", "Description", "Assay", "Biological Replicate", "Technical Replicate",
                          "Cell_type", "Bio_Sample", "Target",
-                         "Assembly", "Lab", "Date", "Version", "Source", "Download_Link", "Source_Link", "Sequencer",
-                         "Run_Type", "File_Type", "Biosample_term_id", "File_Size"])
+                         "Assembly","Genome_Annotation","output_type", "Lab", "Date", "Version", "Source", "Download_Link",
+                         "Source_Link", "Sequencer", "Run_Type", "File_Type", "Biosample_term_id", "File_Size"])
 
                     # Start Data Extraction
                     ###################################################################################################
@@ -139,6 +141,19 @@ def metadata_extractor(exp_url_list):
                     except (KeyError, IndexError):
                         metadata.write("not listed" + "\t")
 
+                    # Genome Annotation
+                    try:
+                        metadata.write(exp_dict["files"][i]["genome_annotation"] + "\t")
+                    except (KeyError, IndexError):
+                        metadata.write("not listed" + "\t")
+
+                    #output_type
+                    try:
+                        metadata.write(exp_dict["files"][i]["output_type"] + "\t")
+
+                    except (KeyError,IndexError):
+                        metadata.write("not listed" + "\t")
+
                     # Lab
                     try:
                         metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["lab"]["title"] + "\t")
@@ -201,6 +216,7 @@ def metadata_extractor(exp_url_list):
 
 def exp_dict_writer(exp_url_list):
     i = 0
+
     with open ("multi_json.txt", "w") as f:
         while i < len(exp_url_list):
                 response = requests.get(exp_url_list[i], headers=HEADERS)
