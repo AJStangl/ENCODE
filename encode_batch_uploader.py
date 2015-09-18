@@ -1,6 +1,6 @@
 __author__ = 'AJ'
-import json, requests
-from new_json_encode import RowObject, JsonObject
+import json, requests, os, time
+
 def get_token():
     '''
     This Function Retrieves the access token needed to upload data
@@ -12,10 +12,29 @@ def get_token():
     token = content_dict["access_token"]
     return token
 
+def open_metadata_file(i):
+    '''
+    This function will change the current file to be uploaded based on the success of experiment_add
+    and job_fetch.
 
+    :param i:An interger that
+    :return:Metadata string in JSON format
+    '''
+    sub_dir = "C:\Users\AJ\PycharmProjects\Encode\jsons"
+    json_file_list = os.listdir(sub_dir)
+    jfile = open(os.path.join(sub_dir, json_file_list[i]), "r")
+    metadata = jfile.read() #Stores file as json string to close read file.
+    jfile.close()
+    return metadata
 
-metadata = JsonObject().add_data()
-token = get_token()
+def experiment_detail(metadata):
+    '''
+    :param metadata: The metadata associated with the experiment. Obtained from the function call open_meta_data
+    :return:The Experiment JSON File
+    '''
+    mfile = json.loads(metadata)
+    mfile_dict = mfile["metadata"]
+    return mfile_dict
 
 def experiment_add(username, token, metadata):
 
@@ -30,16 +49,100 @@ def experiment_add(username, token, metadata):
     :return: None
     '''
 
-    data = metadata[0]
+    data = metadata
 
-    url = "https://genomevolution.org/coge/api/v1/experiments?username=%s&token=%s" % (username, token)
+    url = "https://geco.iplantcollaborative.org/coge/api/v1/experiments?username=%s&token=%s" % (username, token)
+    # url = "https://genomevolution.org/coge/api/v1/experiments?username=%s&token=%s" % (username, token) # Used for Production
     headers = {'Content-type': 'application/json'}
     r = requests.put(url, data, headers=headers)
+    rep_dict = r.json()
+    return rep_dict
+
+def job_fetch(username, token, wid):
+    '''
+    :param username: the username for auth
+    :param token: The token provided from get_token()
+    :param wid: The word id provided by experiment_add()
+    :return: A JSON (dict) of the response from experiment_fetch
+    '''
+    url = "https://geco.iplantcollaborative.org/coge/api/v1/jobs/%d/?username=%s&token=%s" % (wid, username, token)
+    r = requests.get(url)
+    comp_dict = r.json()
+    return comp_dict
+
+def check_status(username, token, wid):
+    '''
+
+    :param username:Your iPlant Username
+    :param token: Token from iPlant Auth
+    :param wid:Work ID from experiment_add
+    :return: The Status of the Job
+    '''
+
+    running = True
+    while running:
+        status = job_fetch(username, token, wid)["status"]
+        time.sleep(30)
+        if status == "Completed":
+            running = False
+            return status
+        elif status == "Running":
+            continue
+        else:
+            running = False
+            return status
+
+def write_log(exp_name, wid, status, comp_dict):
+    if status == "Completed":
+        with open("Completed_Log.txt", "a") as comp_log:
+            comp_log.write(exp_name + "\n" + wid + "\n" + status + "\n" + comp_dict + "\n" + "#####" + "\n")
+            comp_log.close()
+    else:
+        with open("Failed_Log.txt", "a") as comp_log:
+            comp_log.write(exp_name + "\n" + wid + "\n" + status + "\n" + comp_dict + "\n" + "#####" + "\n")
+            comp_log.close()
+    return
+
+
+### FIX THE WRITING LOG ###
+# Sudo Main
+i = 0
+username = "ajstangl"
+token = get_token()
+metadata = open_metadata_file(i)
+exp_name = experiment_detail(metadata)["name"]
+print exp_name
+wid = experiment_add(username, token, metadata)['id']
+print wid
+status = check_status(username, token, wid)
+print status
+comp_dict = json.dumps(job_fetch(username, token, wid))
+print type(comp_dict)
+# write_log(exp_name, wid, status, comp_dict)
 
 
 
 
-experiment_add("ajstangl", token, metadata)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
