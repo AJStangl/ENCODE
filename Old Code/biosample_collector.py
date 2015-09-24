@@ -11,24 +11,14 @@ def get_sample_url():
     """
     base_url = "https://www.encodeproject.org/"
    # search = "search/?type=experiment&assay_term_name=RNA-seq&assembly=hg19&limit=all"
-    search = "/search/?type=biosample&organism.scientific_name=Homo+sapiens&limit=all&status=released"
+    search = "/search/?type=biosample&organism.scientific_name=Homo+sapiens&status=released"
     url = base_url+search
     r = requests.get(url, headers=HEADERS)
+    r = r.json()
+    ls = []
+    i = 0
+    for elem in r:
+        if elem == "@graph":
 
-    encode_dict = r.json()
-
-    exp_list = [] # contains end point
-    exp_url_list = [] # contains full URL for experiment
-
-    print encode_dict
-    # for elem in encode_dict["@graph"]:
-    #     for k in elem:
-    #         if elem["@id"] not in exp_list:
-    #             exp_list.append(elem["@id"])
-
-    # for elem in exp_list:
-    #     exp_url_list.append(base_url + elem)
-    #
-    # print exp_url_list
 
 get_sample_url()

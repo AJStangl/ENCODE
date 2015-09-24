@@ -8,10 +8,8 @@ def get_exp_url():
     :return: exp_url_list
     """
     base_url = "https://www.encodeproject.org/"
-    #search = "search/?type=experiment&assay_term_name=RNA-seq&assembly=hg19&limit=all"
-    #search = "/search/?type=experiment&assembly=hg19&limit=all"
-    #search = "/search/?searchTerm=EFO%3A0002784&type=experiment&assay_term_name=RNA-seq&status=released&assembly=hg19"
-    search = "/search/?searchTerm=EFO%3A0002784&type=experiment&assay_term_name=ChIP-seq&assembly=hg19&status=released"
+    # search = "/search/?searchTerm=EFO%3A0002784&type=experiment&assay_term_name=ChIP-seq&assembly=hg19&status=released"
+    search = "/search/?type=experiment&assay_term_name=ChIP-seq&status=released&assembly=hg19&limit=all" # all chip-seq data
     url = base_url+search
     r = requests.get(url, headers=HEADERS)
 
@@ -43,7 +41,8 @@ def metadata_extractor(exp_url_list):
     with open('metadata_encode.txt', 'w') as metadata:
         metadata.write(
             "Name\tExperiment_Name\tDescription\tAssay\tBiological_Replicate\tTechnical_Replicate\t"
-            "Cell_Type\tBio_Sample\tTarget\tAssembly\tGenome_Annotation\tOutput_Type\tLab\tDate"
+            "Cell_Type\tHealth_Status\tLife_Stage\tAge\tSex\tBio_Sample\tTarget\tAssembly\tGenome_Annotation"
+            "\tOutput_Type\tLab\tDate"
             "\tVersion\tSource\tDownload_Link\tSource_Link\tSequencer\tRun_Type\tFile_Type\tBiosample_term_id"
             "\tFile_Size\n")
 
@@ -54,28 +53,19 @@ def metadata_extractor(exp_url_list):
             i = 0
 
             while i < len(exp_dict["files"]): # Checks to see if annotation is present
-                if exp_dict["files"][i]["file_type"] == "bam": #and exp_dict["files"][i]["output_type"] == "alignments":
+                if exp_dict["files"][i]["file_type"] == "bam":
 
 
                     # Initialize data_dict and data_dict keys if the file format is bam and is aligned to HG19 reference
-                    data_dict = {}
-
-                    data_dict.fromkeys(
-                        ["Filename", "Name", "Description", "Assay", "Biological Replicate", "Technical Replicate",
-                         "Cell_type", "Bio_Sample", "Target",
-                         "Assembly","Genome_Annotation","output_type", "Lab", "Date", "Version", "Source", "Download_Link",
-                         "Source_Link", "Sequencer", "Run_Type", "File_Type", "Biosample_term_id", "File_Size"])
 
                     # Start Data Extraction
                     ###################################################################################################
 
                     # Filename
-                    data_dict["Filename"] = exp_dict["files"][i]["href"]
-                    filename = data_dict["Filename"]
-                    temp = filename.split("/")
-                    metadata.write(temp[4] + "\t")
 
-                    # Name
+                    metadata.write(exp_dict["files"][i]["accession"] + "\t")
+                    # Exp_Name
+
                     metadata.write(exp_dict["accession"] + "\t")
 
                     # Description
@@ -121,6 +111,28 @@ def metadata_extractor(exp_url_list):
                     except KeyError:
                         metadata.write(exp_dict["biosample_term_name"] + "\t")
 
+                    # Health
+                    try:
+                        metadata.write(exp_dict["files"][i]["replicate"]["library"]["biosample"]["health_status"] + "\t")
+                    except KeyError:
+                        metadata.write("Not Listed" + "\t")
+                    # Life Stage
+                    try:
+                        metadata.write(exp_dict["files"][i]["replicate"]["library"]["biosample"]["life_stage"] + "\t")
+                    except KeyError:
+                        metadata.write("Not Listed" + "\t")
+                    # Age
+                    try:
+                        metadata.write(exp_dict["files"][i]["replicate"]["library"]["biosample"]["age"] + "\t")
+                    except KeyError:
+                        metadata.write("Not Listed" + "\t")
+                    # Sex
+                    try:
+                        metadata.write(exp_dict["files"][i]["replicate"]["library"]["biosample"]["sex"] + "\t")
+                    except KeyError:
+                        metadata.write("Not Listed" + "\t")
+
+
                     # Bio_Sample
                     try:
                         metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["biosample_type"] + "\t")
@@ -129,16 +141,16 @@ def metadata_extractor(exp_url_list):
 
                     # Target
                     try:
-                        metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["target"]["label"] + "\t")
+                        metadata.write(exp_dict["target"]["label"] + "\t")
                     except KeyError:
-                        metadata.write("Not Listed" + "\t")
+                        metadata.write("not listed" + "\t")
+
 
                     # Assembly
                     try:
-                        metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["assembly"][0] + "\t")
-                    except (KeyError, IndexError):
+                        metadata.write(exp_dict["files"][i]["assembly"] + "\t")
+                    except KeyError:
                         metadata.write("not listed" + "\t")
-
                     # Genome Annotation
                     try:
                         metadata.write(exp_dict["files"][i]["genome_annotation"] + "\t")
@@ -165,7 +177,7 @@ def metadata_extractor(exp_url_list):
                         metadata.write(exp_dict["files"][i]["date_created"] + "\t")
 
                     # Version
-                    Version = data_dict["Version"] = "1"
+                    Version = str(1)
                     metadata.write(Version + "\t")
 
                     # Source
@@ -206,7 +218,7 @@ def metadata_extractor(exp_url_list):
 
                     # End of Metadata File Entry
                     metadata.write("\n")
-                    metadata.close() #may break code and needs to be testd
+                    # metadata.close() #may break code and needs to be testd
                 i = i + 1
 
     return
