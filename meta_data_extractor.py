@@ -227,10 +227,14 @@ def metadata_extractor(exp_url_list):
 # Sudo Main
 '''
 Order of operations to create a tsv file that contains the metadata from encode
+<<<<<<< HEAD:meta_data_extractor.py
 
 Final Output is a new directory named json with json files that represent indivual experiments.
 '''
 
+=======
+'''
+>>>>>>> origin/master:meta_data_extractor.py
 exp_url_list = get_exp_url()
 metadata_extractor(exp_url_list)
 
