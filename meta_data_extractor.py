@@ -1,20 +1,17 @@
 __author__ = 'AJ'
 import requests, json, pprint
-HEADERS = {'accept': 'application/json'}
-def get_exp_url():
+
+def get_exp_url(search):
     """
     :param search: The endpoint url for searching encode.
     This script will take in a URL from encode and return a list of experiment URLS
     :return: exp_url_list
     """
+    HEADERS = {'accept': 'application/json'}
     base_url = "https://www.encodeproject.org/"
-    # search = "/search/?searchTerm=EFO%3A0002784&type=experiment&assay_term_name=ChIP-seq&assembly=hg19&status=released"
-    search = "/search/?type=experiment&assay_term_name=ChIP-seq&status=released&assembly=hg19&limit=all" # all chip-seq data
     url = base_url+search
     r = requests.get(url, headers=HEADERS)
-
     encode_dict = r.json()
-
     exp_list = [] # contains end point
     exp_url_list = [] # contains full URL for experiment
 
@@ -37,7 +34,7 @@ def metadata_extractor(exp_url_list):
     :return: None
     : Write: metadata_data.txt
     """
-    # Current Version must be updata
+
     with open('metadata_encode.txt', 'w') as metadata:
         metadata.write(
             "Name\tExperiment_Name\tDescription\tAssay\tBiological_Replicate\tTechnical_Replicate\t"
@@ -55,17 +52,13 @@ def metadata_extractor(exp_url_list):
             while i < len(exp_dict["files"]): # Checks to see if annotation is present
                 if exp_dict["files"][i]["file_type"] == "bam":
 
-
-                    # Initialize data_dict and data_dict keys if the file format is bam and is aligned to HG19 reference
-
                     # Start Data Extraction
                     ###################################################################################################
 
                     # Filename
-
                     metadata.write(exp_dict["files"][i]["accession"] + "\t")
-                    # Exp_Name
 
+                    # Exp_Name
                     metadata.write(exp_dict["accession"] + "\t")
 
                     # Description
@@ -132,7 +125,6 @@ def metadata_extractor(exp_url_list):
                     except KeyError:
                         metadata.write("Not Listed" + "\t")
 
-
                     # Bio_Sample
                     try:
                         metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["biosample_type"] + "\t")
@@ -145,12 +137,12 @@ def metadata_extractor(exp_url_list):
                     except KeyError:
                         metadata.write("not listed" + "\t")
 
-
                     # Assembly
                     try:
                         metadata.write(exp_dict["files"][i]["assembly"] + "\t")
                     except KeyError:
                         metadata.write("not listed" + "\t")
+
                     # Genome Annotation
                     try:
                         metadata.write(exp_dict["files"][i]["genome_annotation"] + "\t")
@@ -213,29 +205,15 @@ def metadata_extractor(exp_url_list):
 
                     # File_Size
                     fsize = (exp_dict["files"][i]["file_size"]*9.5367431640625e-07)
-                    # metadata.write(str(fsize) + "\t")
                     metadata.write(str(fsize))
-
-                    # End of Metadata File Entry
                     metadata.write("\n")
-                    # metadata.close() #may break code and needs to be testd
-                i = i + 1
 
+                i += 1
     return
 
 
 # Sudo Main
-'''
-Order of operations to create a tsv file that contains the metadata from encode
-<<<<<<< HEAD:meta_data_extractor.py
-
-Final Output is a new directory named json with json files that represent indivual experiments.
-'''
-
-=======
-'''
->>>>>>> origin/master:meta_data_extractor.py
-exp_url_list = get_exp_url()
+exp_url_list = get_exp_url(search= "/search/?type=experiment&assay_term_name=ChIP-seq&status=released&assembly=hg19&limit=all")
 metadata_extractor(exp_url_list)
 
 

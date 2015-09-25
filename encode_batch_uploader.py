@@ -1,16 +1,31 @@
 __author__ = 'AJ'
 import json, requests, os, time
 
-def get_token():
+
+def user_data(mfile):
+    '''
+    This function will return the user data for login
+    :param file: TSV file with login information
+    :return: Dict of Login Information
+    '''
+    login = {}
+    with open(mfile, "r") as info:
+        login = json.load(info)
+        info.close()
+    return login
+
+
+def get_token(username, password, key, secret):
     '''
     This Function Retrieves the access token needed to upload data
     '''
-    payload = {'grant_type':"client_credentials",'username': 'ajstangl', 'password': 'Bio Informatics1', 'scope': 'PRODUCTION'}
-    auth = ('mJCMDFPwT6AjKJiuH6Liz3q7gkUa', 'HSBDwhrJtQqjzYcP_LeHsRPZ508a')
+    payload = {'grant_type':"client_credentials",'username': username, 'password': password, 'scope': 'PRODUCTION'}
+    auth = (key, secret)
     r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
     content_dict = json.loads(r.content)
     token = content_dict["access_token"]
     return token
+
 
 def file_list(sub_dir):
     '''
@@ -19,6 +34,7 @@ def file_list(sub_dir):
     '''
     json_file_list = os.listdir(sub_dir)
     return json_file_list
+
 
 def open_metadata_file(i, sub_dir, json_file_list):
     '''
@@ -34,6 +50,7 @@ def open_metadata_file(i, sub_dir, json_file_list):
     jfile.close()
     return metadata
 
+
 def experiment_detail(metadata):
     '''
     :param metadata: The metadata associated with the experiment. Obtained from the function call open_meta_data
@@ -42,6 +59,7 @@ def experiment_detail(metadata):
     mfile = json.loads(metadata)
     mfile_dict = mfile["metadata"]
     return mfile_dict
+
 
 def experiment_add(username, token, metadata, base_url):
 
@@ -66,6 +84,7 @@ def experiment_add(username, token, metadata, base_url):
     rep_dict = r.json()
     return rep_dict
 
+
 def job_fetch(username, token, wid, base_url):
     '''
     :param username: the username for auth
@@ -80,19 +99,21 @@ def job_fetch(username, token, wid, base_url):
     comp_dict = r.json()
     return comp_dict
 
-def check_status(username, token, wid):
+
+def check_status(username, token, wid, wait):
     '''
 
     :param username:Your iPlant Username
     :param token: Token from iPlant Auth
     :param wid:Work ID from experiment_add
+    :Param wait: Time in seconds until the status is checked again
     :return: The Status of the Job
     '''
 
     running = True
     while running:
         status = job_fetch(username, token, wid, base_url)["status"]
-        time.sleep(30)
+        time.sleep(wait)
         if status == "Completed":
             running = False
             return status
@@ -101,6 +122,7 @@ def check_status(username, token, wid):
         else:
             running = False
             return status
+
 
 def write_log(exp_name, wid, status, comp_dict):
     if status == "Completed":
@@ -117,6 +139,7 @@ def write_log(exp_name, wid, status, comp_dict):
             comp_log.close()
     return
 
+
 def next_job(i, status):
     '''
 
@@ -124,27 +147,30 @@ def next_job(i, status):
     :return: i
     '''
     if status == "Completed":
-        i = i + 1
+        i += 1
     elif status == "Failed":
-        i = i + 1
+        i += 1
     return i
 
+
+
 # Sudo Main
-username = "ajstangl"
+login = user_data("login.json")
+username = login["username"]
 base_url = "https://geco.iplantcollaborative.org/coge/"
 sub_dir = "C:\Users\AJ\PycharmProjects\Encode\jsons"
 json_file_list = file_list(sub_dir)
-
 max_files = len(json_file_list)
+wait = 10
 i = 0
 while i < max_files:
-    token = get_token()
+    token = get_token(username, password=login["password"], key=login["key"], secret=login["secret"])
     metadata = open_metadata_file(i, sub_dir, json_file_list)
     exp_name = experiment_detail(metadata)["name"]
     print exp_name
     wid = experiment_add(username, token, metadata, base_url)['id']
     print wid
-    status = check_status(username, token, wid)
+    status = check_status(username, token, wid, wait)
     print status
     comp_dict = json.dumps(job_fetch(username, token, wid, base_url))
     write_log(exp_name, wid, status, comp_dict)

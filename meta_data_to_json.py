@@ -16,8 +16,7 @@ class JsonObject:
         return
 
     def add_data(self):
-        # Opens the metadata file and writes the json object file
-        # with open("all_bam_metadata_encode.txt", "r") as infile:
+
         with open("test.txt", "r") as infile:
             headings = next(infile)
             reader = csv.reader(infile, delimiter='\t')
@@ -33,7 +32,7 @@ class JsonObject:
 
                 source_data = [{"type": "http","path": row[16]}]
 
-                temp = RowObject(int(26119), metadata, source_data, additional_metadata) #
+                temp = RowObject(int(26119), metadata, source_data, additional_metadata)
 
 
                 with open("jsons/" + row[0] + ".json", "w") as outfile:
@@ -52,11 +51,11 @@ class RowObject:
     This is a sub-class that creates the fields for the metadata file that will be used in the json object class
     '''
 
-    def __init__(self, gnm_id, metadata, source_data, additional_metadata):#
+    def __init__(self, gnm_id, metadata, source_data, additional_metadata):
         self.genome_id = gnm_id
         self.source_data = source_data
         self.metadata = metadata
         self.additional_metadata = additional_metadata
         return
 
-JsonObject().add_data() #check to see if this function call is nessecary
+JsonObject().add_data()
