@@ -17,7 +17,7 @@ class JsonObject:
 
     def add_data(self):
 
-        with open("test.txt", "r") as infile:
+        with open("test_3.txt", "r") as infile:
             headings = next(infile)
             reader = csv.reader(infile, delimiter='\t')
             i = 0
@@ -25,12 +25,31 @@ class JsonObject:
 
             for row in reader:
 
-                metadata = {"restricted": True, "name": row[0], "description": row[2], "version": row[14],
-                            "source_name": "Encode"}
+                metadata = {"restricted": False, "name": row[0], "description": row[2], "version": row[18],
+                            "source": "Encode"}
 
-                additional_metadata = [{"Date": row[13], "link": row[17]}]
+                additional_metadata = [{"type": "Cell Type", "text": row[6]},
+                                       {"type": "Biological Replicate", "text": row[4]},
+                                       {"type": "Technical Replicate", "text": row[5]},
+                                       {"type": "Health Status", "text": row[7]},
+                                       {"type": "Life Stage", "text": row[8]},
+                                       {"type": "Age", "text": row[9]},
+                                       {"type": "Sex", "text": row[10]},
+                                       {"type": "Biosample", "text": row[11]},
+                                       {"type": "Assay Target", "text": row[12]},
+                                       {"type": "Genome Assembly", "text": row[13]},
+                                       {"type": "Output Type ", "text": row[15]},
+                                       {"type": "Lab Info", "text": row[16]},
+                                       {"type": "Date", "text": row[17]},
+                                       {"type": "Experiment URL", "text": row[21]},
+                                       {"type": "Sequencer Info", "text": row[22]},
+                                       {"type": "Sequencer Run Info", "text": row[23]},
+                                       {"type": "File Type", "text": row[24]},
+                                       {"type": "Encode Biosample ID", "text": row[25]},
+                                       {"type": "File Size", "text": row[26]}]
 
-                source_data = [{"type": "http","path": row[16]}]
+
+                source_data = [{"type": "http", "path": row[20]}]
 
                 temp = RowObject(int(26119), metadata, source_data, additional_metadata)
 

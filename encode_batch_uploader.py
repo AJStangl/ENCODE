@@ -1,5 +1,5 @@
 __author__ = 'AJ'
-import json, requests, os, time
+import json, requests, os, time, csv
 
 
 def user_data(mfile):
@@ -60,6 +60,38 @@ def experiment_detail(metadata):
     mfile_dict = mfile["metadata"]
     return mfile_dict
 
+def notebook_add(username, token, base_url, metadata):
+    '''
+
+    :param username: Iplant User ID
+    :param token: Token From Agave API
+    :param base_url: Base URL for API
+    :return: Notebook ID
+    '''
+    url = base_url + "api/v1/notebooks/?username=%s&token=%s" % (username, token)
+    mdata = json.loads(metadata)
+    adata = mdata["additional_metadata"]
+
+    for elem in adata:
+        if elem["text"] == "Bio_Sample":
+            temp = elem["type"]
+    nb_name = temp
+
+    desc = mdata["metadata"]["description"]
+
+    nb_dict = {"name": nb_name}, {"description": desc}, {"restricted": False}, {"type": "mixed"}
+
+    # nb_data = json.dumps(nb_data)
+    # r = requests.put(url, nb_data)
+    # nb_dict = r.json()
+    print nb_dict
+    # print nb_data
+
+
+
+
+
+
 
 def experiment_add(username, token, metadata, base_url):
 
@@ -75,9 +107,6 @@ def experiment_add(username, token, metadata, base_url):
     '''
 
     data = metadata
-
-    # url = "https://geco.iplantcollaborative.org/coge/api/v1/experiments?username=%s&token=%s" % (username, token)
-    # url = "https://genomevolution.org/coge/api/v1/experiments?username=%s&token=%s" % (username, token) # Used for Production
     url = base_url + "api/v1/experiments?username=%s&token=%s" % (username, token)
     headers = {'Content-type': 'application/json'}
     r = requests.put(url, data, headers=headers)
@@ -93,8 +122,6 @@ def job_fetch(username, token, wid, base_url):
     :return: A JSON (dict) of the response from experiment_fetch
     '''
     url = base_url + "api/v1/jobs/%d/?username=%s&token=%s" % (wid, username, token)
-    # url = "https://geco.iplantcollaborative.org/coge/api/v1/jobs/%d/?username=%s&token=%s" % (wid, username, token)
-    # url = "https://genomevolution.org/coge/api/v1/jobs/%d/?username=%s&token=%s" % (wid, username, token)
     r = requests.get(url)
     comp_dict = r.json()
     return comp_dict
@@ -153,28 +180,37 @@ def next_job(i, status):
     return i
 
 
-
 # Sudo Main
 login = user_data("login.json")
 username = login["username"]
 base_url = "https://geco.iplantcollaborative.org/coge/"
 sub_dir = "C:\Users\AJ\PycharmProjects\Encode\jsons"
+i = 0
 json_file_list = file_list(sub_dir)
 max_files = len(json_file_list)
+token = get_token(username, password=login["password"], key=login["key"], secret=login["secret"])
+metadata = open_metadata_file(i, sub_dir, json_file_list)
+detail_dict = experiment_detail(metadata)
+exp_name = experiment_detail(metadata)["name"]
+#TODO Need to fix for future itegration for CoGe
+notebook_add(username,token,base_url,metadata)
+
+
 wait = 10
 i = 0
-while i < max_files:
-    token = get_token(username, password=login["password"], key=login["key"], secret=login["secret"])
-    metadata = open_metadata_file(i, sub_dir, json_file_list)
-    exp_name = experiment_detail(metadata)["name"]
-    print exp_name
-    wid = experiment_add(username, token, metadata, base_url)['id']
-    print wid
-    status = check_status(username, token, wid, wait)
-    print status
-    comp_dict = json.dumps(job_fetch(username, token, wid, base_url))
-    write_log(exp_name, wid, status, comp_dict)
-    i = next_job(i, status)
+# while i < max_files:
+#     token = get_token(username, password=login["password"], key=login["key"], secret=login["secret"])
+#     metadata = open_metadata_file(i, sub_dir, json_file_list)
+#     exp_name = experiment_detail(metadata)["name"]
+#     print exp_name
+#     wid = experiment_add(username, token, metadata, base_url)['id']
+#     print wid
+#     status = check_status(username, token, wid, wait)
+#     print status
+#     comp_dict = json.dumps(job_fetch(username, token, wid, base_url))
+#     write_log(exp_name, wid, status, comp_dict)
+#     i = next_job(i, status)
+#
 
 
 
