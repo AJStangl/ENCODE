@@ -42,9 +42,8 @@ def open_metadata_file(i, sub_dir, json_file_list):
     and job_fetch.
 
     :param i:An interger that
-    :return:Metadata string in JSON format
+    :return:Metadata json dict
     '''
-    # json_file_list = os.listdir(sub_dir)
     jfile = open(os.path.join(sub_dir, json_file_list[i]), "r")
     metadata = jfile.read() #Stores file as json string to close read file.
     jfile.close()
@@ -60,6 +59,7 @@ def experiment_detail(metadata):
     mfile_dict = mfile["metadata"]
     return mfile_dict
 
+
 def notebook_add(username, token, base_url, metadata):
     '''
 
@@ -68,6 +68,11 @@ def notebook_add(username, token, base_url, metadata):
     :param base_url: Base URL for API
     :return: Notebook ID
     '''
+    class Notebook:
+
+        def __init__(self, nb_name, desc, tp):
+            self.metadata = {"name": nb_name, "description": desc, "restricted": False, "type": tp}
+
     url = base_url + "api/v1/notebooks/?username=%s&token=%s" % (username, token)
     mdata = json.loads(metadata)
     adata = mdata["additional_metadata"]
@@ -78,19 +83,11 @@ def notebook_add(username, token, base_url, metadata):
     nb_name = temp
 
     desc = mdata["metadata"]["description"]
-
-    nb_dict = {"name": nb_name}, {"description": desc}, {"restricted": False}, {"type": "mixed"}
-
-    # nb_data = json.dumps(nb_data)
-    # r = requests.put(url, nb_data)
-    # nb_dict = r.json()
-    print nb_dict
-    # print nb_data
-
-
-
-
-
+    tp = "mixed"
+    pay = json.dumps(vars(Notebook(nb_name, desc, tp)))
+    r = requests.put(url,pay)
+    resp_dict = r.json()
+    return resp_dict
 
 
 def experiment_add(username, token, metadata, base_url):
@@ -180,37 +177,40 @@ def next_job(i, status):
     return i
 
 
+
+
 # Sudo Main
 login = user_data("login.json")
 username = login["username"]
 base_url = "https://geco.iplantcollaborative.org/coge/"
-sub_dir = "C:\Users\AJ\PycharmProjects\Encode\jsons"
-i = 0
+# sub_dir = "C:\Users\AJ\PycharmProjects\Encode\jsons"
+sub_dir="/home/ajstangl/encode/jsons" # for geco
+
 json_file_list = file_list(sub_dir)
 max_files = len(json_file_list)
-token = get_token(username, password=login["password"], key=login["key"], secret=login["secret"])
-metadata = open_metadata_file(i, sub_dir, json_file_list)
-detail_dict = experiment_detail(metadata)
-exp_name = experiment_detail(metadata)["name"]
-#TODO Need to fix for future itegration for CoGe
-notebook_add(username,token,base_url,metadata)
-
-
-wait = 10
+wait = 60
 i = 0
-# while i < max_files:
-#     token = get_token(username, password=login["password"], key=login["key"], secret=login["secret"])
-#     metadata = open_metadata_file(i, sub_dir, json_file_list)
-#     exp_name = experiment_detail(metadata)["name"]
-#     print exp_name
-#     wid = experiment_add(username, token, metadata, base_url)['id']
-#     print wid
-#     status = check_status(username, token, wid, wait)
-#     print status
-#     comp_dict = json.dumps(job_fetch(username, token, wid, base_url))
-#     write_log(exp_name, wid, status, comp_dict)
-#     i = next_job(i, status)
-#
+run_once = 0 # Need a better logic gate for new note book - unless performed biosample by biosample.
+while i < max_files:
+    token = get_token(username, password=login["password"], key=login["key"], secret=login["secret"])
+    metadata = open_metadata_file(i, sub_dir, json_file_list)
+    if run_once == 0:
+        nb_id = notebook_add(username, token, base_url, metadata)["id"]
+        run_once = 1
+    print nb_id
+    metadata = json.loads(metadata)
+    metadata["notebook_id"] = nb_id
+    metadata = json.dumps(metadata)
+    exp_name = experiment_detail(metadata)["name"]
+    print exp_name
+    wid = experiment_add(username, token, metadata, base_url)['id']
+    print wid
+    status = check_status(username, token, wid, wait)
+    print status
+    comp_dict = json.dumps(job_fetch(username, token, wid, base_url))
+    write_log(exp_name, wid, status, comp_dict)
+    i = next_job(i, status)
+
 
 
 

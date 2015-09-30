@@ -34,7 +34,7 @@ def metadata_extractor(exp_url_list):
     :return: None
     : Write: metadata_data.txt
     """
-
+    HEADERS = {'accept': 'application/json'}
     with open('metadata_encode.txt', 'w') as metadata:
         metadata.write(
             "Name\tExperiment_Name\tDescription\tAssay\tBiological_Replicate\tTechnical_Replicate\t"
