@@ -50,47 +50,55 @@ def open_metadata_file(i, sub_dir, json_file_list):
     return metadata
 
 
-def experiment_detail(metadata):
+def primary_metadata(metadata):
     '''
     :param metadata: The metadata associated with the experiment. Obtained from the function call open_meta_data
     :return:The Experiment JSON File
     '''
     mfile = json.loads(metadata)
-    mfile_dict = mfile["metadata"]
-    return mfile_dict
+    meta_dict = mfile["metadata"]
+    return meta_dict
 
 
-def notebook_add(username, token, base_url, metadata):
+def additional_metadata(metadata):
     '''
 
-    :param username: Iplant User ID
-    :param token: Token From Agave API
-    :param base_url: Base URL for API
-    :return: Notebook ID
+    :param metadata: The metadata json string returned from open_metadata_file
+    :return: A dict of additional metadata items
     '''
+    metadata = json.loads(metadata)
+    add_meta = metadata["additional_metadata"]
+    add_dict = {}
+    for elem in add_meta:
+        add_dict[elem['type']] = elem['text']
+    return add_dict
+
+
+def notebook_add(add_meta):
+    '''
+
+    :param add_meta:Additional Meta Hash from for giving the proper id and name to note books
+    :return: Put response (Dict)
+    '''
+
     class Notebook:
-
         def __init__(self, nb_name, desc, tp):
             self.metadata = {"name": nb_name, "description": desc, "restricted": False, "type": tp}
 
     url = base_url + "api/v1/notebooks/?username=%s&token=%s" % (username, token)
-    mdata = json.loads(metadata)
-    adata = mdata["additional_metadata"]
+    headers = {'Content-type': 'application/json'}
 
-    for elem in adata:
-        if elem["text"] == "Bio_Sample":
-            temp = elem["type"]
-    nb_name = temp
-
-    desc = mdata["metadata"]["description"]
+    nb_name = add_meta["Encode Biosample ID"]
+    desc = add_meta["Cell Type"]
     tp = "mixed"
+
     pay = json.dumps(vars(Notebook(nb_name, desc, tp)))
-    r = requests.put(url,pay)
+    r = requests.put(url, pay, headers=headers)
     resp_dict = r.json()
     return resp_dict
 
 
-def experiment_add(username, token, metadata, base_url):
+def experiment_add(username, token, metadata, base_url, nb_id):
 
     '''
     This function will take in a meta data file, iterate through the column in the TSV file and upload experiment
@@ -104,6 +112,9 @@ def experiment_add(username, token, metadata, base_url):
     '''
 
     data = metadata
+    data = json.loads(data)
+    data["notebook_id"] = int(nb_id)
+    data = json.dumps(data)
     url = base_url + "api/v1/experiments?username=%s&token=%s" % (username, token)
     headers = {'Content-type': 'application/json'}
     r = requests.put(url, data, headers=headers)
@@ -138,6 +149,7 @@ def check_status(username, token, wid, wait):
     while running:
         status = job_fetch(username, token, wid, base_url)["status"]
         time.sleep(wait)
+        print "Running"
         if status == "Completed":
             running = False
             return status
@@ -176,16 +188,12 @@ def next_job(i, status):
         i += 1
     return i
 
-
-
-
 # Sudo Main
 login = user_data("login.json")
 username = login["username"]
 base_url = "https://geco.iplantcollaborative.org/coge/"
-# sub_dir = "C:\Users\AJ\PycharmProjects\Encode\jsons"
-sub_dir="/home/ajstangl/encode/jsons" # for geco
-
+sub_dir = "C:\Users\AJ\PycharmProjects\Encode\jsons"
+# sub_dir="/home/ajstangl/encode/jsons" # for geco
 json_file_list = file_list(sub_dir)
 max_files = len(json_file_list)
 wait = 60
@@ -194,22 +202,25 @@ run_once = 0 # Need a better logic gate for new note book - unless performed bio
 while i < max_files:
     token = get_token(username, password=login["password"], key=login["key"], secret=login["secret"])
     metadata = open_metadata_file(i, sub_dir, json_file_list)
+    pri_meta = primary_metadata(metadata)
+    add_meta = additional_metadata(metadata)
     if run_once == 0:
-        nb_id = notebook_add(username, token, base_url, metadata)["id"]
+        nb_id = notebook_add(add_meta)["id"]
         run_once = 1
     print nb_id
-    metadata = json.loads(metadata)
-    metadata["notebook_id"] = nb_id
-    metadata = json.dumps(metadata)
-    exp_name = experiment_detail(metadata)["name"]
+    exp_name = pri_meta["name"]
     print exp_name
-    wid = experiment_add(username, token, metadata, base_url)['id']
+    wid = experiment_add(username, token, metadata, base_url, nb_id)['id']
     print wid
     status = check_status(username, token, wid, wait)
     print status
     comp_dict = json.dumps(job_fetch(username, token, wid, base_url))
     write_log(exp_name, wid, status, comp_dict)
     i = next_job(i, status)
+
+
+
+
 
 
 
