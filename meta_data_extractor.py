@@ -66,37 +66,37 @@ def metadata_extractor(exp_url_list):
                         if exp_dict["files"][i]["replicate"]["experiment"]["description"] != "":
                             metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["description"].replace("\n","").replace("\r","") + "\t")
                         else:
-                            metadata.write("Not Listed" + "\t")
+                            metadata.write("not listed" + "\t")
                     except KeyError:
                         if exp_dict["description"] != "":
                             metadata.write(exp_dict["description"] + "\t")
                         else:
-                            metadata.write("Not Listed" + "\t")
+                            metadata.write("not listed" + "\t")
 
                     # Assay
                     try:
                         if exp_dict["files"][i]["replicate"]["experiment"]["assay_term_name"] != "":
                             metadata.write(exp_dict["files"][i]["replicate"]["experiment"]["assay_term_name"] + "\t")
                         else:
-                            metadata.write("Not Listed" + "\t")
+                            metadata.write("not listed" + "\t")
                     except KeyError:
                         if exp_dict["assay_term_name"] != "":
                             metadata.write(exp_dict["assay_term_name"] + "\t")
                         else:
-                            metadata.write("Not Listed" + "\t")
+                            metadata.write("not listed" + "\t")
 
                     # Biological Replicate
                     try:
                         metadata.write(str(exp_dict["files"][i]["replicate"]["biological_replicate_number"]) + "\t")
 
                     except KeyError:
-                        metadata.write("Not Listed" + "\t")
+                        metadata.write("not listed" + "\t")
 
                     # Technical Replicate
                     try:
                         metadata.write(str(exp_dict["files"][i]["replicate"]["technical_replicate_number"]) + "\t")
                     except KeyError:
-                        metadata.write("Not Listed" + "\t")
+                        metadata.write("not listed" + "\t")
 
                     # Cell_Type
                     try:
@@ -108,22 +108,22 @@ def metadata_extractor(exp_url_list):
                     try:
                         metadata.write(exp_dict["files"][i]["replicate"]["library"]["biosample"]["health_status"] + "\t")
                     except KeyError:
-                        metadata.write("Not Listed" + "\t")
+                        metadata.write("not listed" + "\t")
                     # Life Stage
                     try:
                         metadata.write(exp_dict["files"][i]["replicate"]["library"]["biosample"]["life_stage"] + "\t")
                     except KeyError:
-                        metadata.write("Not Listed" + "\t")
+                        metadata.write("not listed" + "\t")
                     # Age
                     try:
                         metadata.write(exp_dict["files"][i]["replicate"]["library"]["biosample"]["age"] + "\t")
                     except KeyError:
-                        metadata.write("Not Listed" + "\t")
+                        metadata.write("not listed" + "\t")
                     # Sex
                     try:
                         metadata.write(exp_dict["files"][i]["replicate"]["library"]["biosample"]["sex"] + "\t")
                     except KeyError:
-                        metadata.write("Not Listed" + "\t")
+                        metadata.write("not listed" + "\t")
 
                     # Bio_Sample
                     try:

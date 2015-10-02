@@ -46,7 +46,8 @@ class JsonObject:
                                        {"type": "Sequencer Run Info", "text": row[23]},
                                        {"type": "File Type", "text": row[24]},
                                        {"type": "Encode Biosample ID", "text": row[25]},
-                                       {"type": "File Size", "text": row[26]}]
+                                       {"type": "File Size", "text": row[26]},
+                                       {"type": "Experiment Name", "text": row[1]}]
 
 
                 source_data = [{"type": "http", "path": row[20]}]
