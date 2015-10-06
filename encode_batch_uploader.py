@@ -1,5 +1,7 @@
 __author__ = 'AJ'
-import json, requests, os, time, csv
+import json, requests, os, time, csv, timeit
+from threading import Thread
+
 
 
 def user_data(mfile):
@@ -34,6 +36,10 @@ def file_list(sub_dir):
     '''
     json_file_list = os.listdir(sub_dir)
     return json_file_list
+
+
+def max_file_length(sub_dir,json_file_list):
+    max_file_lenght = len(json_file_list(sub_dir))
 
 
 def open_metadata_file(i, sub_dir, json_file_list):
@@ -74,7 +80,7 @@ def additional_metadata(metadata):
     return add_dict
 
 
-def notebook_add(add_meta):
+def notebook_add(add_meta, username,token, base_url):
     '''
 
     :param add_meta:Additional Meta Hash from for giving the proper id and name to note books
@@ -96,6 +102,21 @@ def notebook_add(add_meta):
     r = requests.put(url, pay, headers=headers)
     resp_dict = r.json()
     return resp_dict
+
+
+def notebook_search(term, base_url, username, token):
+    """
+    This function will check if a Notebook already exists A
+    :param term:The search term for the notebook (notebook name)
+    :return: false if does not exist or dict of notebook vars if does
+    """
+    url = base_url + "api/v1/notebooks/search/%s/?username=%s&token=%s" % (term, username, token)
+    r = requests.get(url)
+    resp_dict = r.json()
+    try:
+        return resp_dict["notebooks"][0]
+    except IndexError:
+        return False
 
 
 def experiment_add(username, token, metadata, base_url, nb_id):
@@ -135,7 +156,7 @@ def job_fetch(username, token, wid, base_url):
     return comp_dict
 
 
-def check_status(username, token, wid, wait):
+def check_status(username, token, wid, wait, base_url):
     '''
 
     :param username:Your iPlant Username
@@ -149,7 +170,7 @@ def check_status(username, token, wid, wait):
     while running:
         status = job_fetch(username, token, wid, base_url)["status"]
         time.sleep(wait)
-        print "Running"
+        # print "Running"
         if status == "Completed":
             running = False
             return status
@@ -160,63 +181,117 @@ def check_status(username, token, wid, wait):
             return status
 
 
-def write_log(exp_name, wid, status, comp_dict):
+def write_log(exp_name, wid, status, comp_dict, elapsed):
     if status == "Completed":
         with open("Completed_Log.txt", "a") as comp_log:
             comp_log.write(exp_name + "\n" + str(wid) + "\n" + status + "\n")
             comp_log.write(comp_dict)
+            comp_log.write("\n" + "Time elapsed: " + str(elapsed) + "\n")
             comp_log.write("\n" + "#####" + "\n")
             comp_log.close()
     else:
         with open("Failed_Log.txt", "a") as comp_log:
             comp_log.write(exp_name + "\n" + str(wid)+ "\n" + status + "\n")
             comp_log.write(comp_dict)
+            comp_log.write("\n" + "Time elapsed: " + str(elapsed) + "\n")
             comp_log.write("\n" + "#####" + "\n")
             comp_log.close()
     return
 
 
-def next_job(i, status):
+def next_job(start, status):
     '''
 
     :param status: The status of
     :return: i
     '''
     if status == "Completed":
-        i += 1
+        start += 1
     elif status == "Failed":
-        i += 1
-    return i
+        start += 1
+    return start
 
-# Sudo Main
-login = user_data("login.json")
-username = login["username"]
-base_url = "https://geco.iplantcollaborative.org/coge/"
-sub_dir = "C:\Users\AJ\PycharmProjects\Encode\jsons"
-# sub_dir="/home/ajstangl/encode/jsons" # for geco
-json_file_list = file_list(sub_dir)
-max_files = len(json_file_list)
-wait = 60
-i = 0
-run_once = 0 # Need a better logic gate for new note book - unless performed biosample by biosample.
-while i < max_files:
-    token = get_token(username, password=login["password"], key=login["key"], secret=login["secret"])
-    metadata = open_metadata_file(i, sub_dir, json_file_list)
-    pri_meta = primary_metadata(metadata)
-    add_meta = additional_metadata(metadata)
-    if run_once == 0:
-        nb_id = notebook_add(add_meta)["id"]
-        run_once = 1
-    print nb_id
-    exp_name = pri_meta["name"]
-    print exp_name
-    wid = experiment_add(username, token, metadata, base_url, nb_id)['id']
-    print wid
-    status = check_status(username, token, wid, wait)
-    print status
-    comp_dict = json.dumps(job_fetch(username, token, wid, base_url))
-    write_log(exp_name, wid, status, comp_dict)
-    i = next_job(i, status)
+
+def split_jobs(file_list, size):
+    """
+    :param jobs: The return of max_files file_list function. Specifies how many tasks need to be performed
+    :param size: The number of task to be performed
+    :return: A list of ranges that speficy the number of tasks
+    """
+
+    ranges = []
+    splitsize = 1.0/size*len(file_list)
+    for i in range(size):
+            ranges.append(file_list[int(round(i*splitsize)):int(round((i+1)*splitsize))])
+    return ranges
+
+
+def run_all(min, max):
+    start_time = timeit.default_timer()
+    login = user_data("login.json")
+    username = login["username"]
+    base_url = "https://geco.iplantcollaborative.org/coge/"
+    json_file_list = file_list(sub_dir)
+    wait = 10
+
+    for i in range(min, max+1):
+        token = get_token(username, password=login["password"], key=login["key"], secret=login["secret"])
+        metadata = open_metadata_file(i, sub_dir, json_file_list)
+        pri_meta = primary_metadata(metadata)
+        add_meta = additional_metadata(metadata)
+        term = add_meta["Encode Biosample ID"]
+        nb_check = notebook_search(term, base_url, username, token)
+        if nb_check == False:
+            nb_id = notebook_add(add_meta, username, token, base_url)["id"]
+            print nb_id
+        else:
+            nb_id = notebook_search(term, base_url, username, token)["id"]
+        exp_name = pri_meta["name"]
+        print exp_name
+        wid = experiment_add(username, token, metadata, base_url, nb_id)['id']
+        print wid
+        status = check_status(username, token, wid, wait, base_url)
+        if status == "Complete":
+            print exp_name + ":" + wid + " " + "Complete"
+        comp_dict = json.dumps(job_fetch(username, token, wid, base_url))
+        elapsed = timeit.default_timer() - start_time
+        write_log(exp_name, wid, status, comp_dict, elapsed)
+
+
+
+
+if __name__=='__main__':
+    sub_dir = "C:\Users\AJ\PycharmProjects\Encode\Test J" # for testing with chicken
+    # sub_dir = "C:\Users\AJ\PycharmProjects\Encode\jsons"
+    # sub_dir="/home/ajstangl/encode/jsons" # for geco
+    # sub_dir = "C:\Users\AJ\PycharmProjects\Encode\Test J"
+
+    total_files = len(file_list(sub_dir))
+    temp = split_jobs(range(total_files), 4)
+    w1 = temp[0]
+    w2 = temp[1]
+    w3 = temp[2]
+    w4 = temp[3]
+
+    p1 = Thread(target=run_all, args=(min(w1), max(w1)))
+    p2 = Thread(target=run_all, args=(min(w2), max(w2)))
+    p3 = Thread(target=run_all, args=(min(w3), max(w3)))
+    p4 = Thread(target=run_all, args=(min(w4), max(w4)))
+
+    p1.start()
+    time.sleep(10)
+    p2.start()
+    time.sleep(10)
+    p3.start()
+    time.sleep(10)
+    p4.start()
+
+
+
+
+
+
+
 
 
 

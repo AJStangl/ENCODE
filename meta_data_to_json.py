@@ -49,21 +49,23 @@ class JsonObject:
                                        {"type": "File Size", "text": row[26]},
                                        {"type": "Experiment Name", "text": row[1]}]
 
+                expression_params = {"-Q": 20}
+
 
                 source_data = [{"type": "http", "path": row[20]}]
 
-                temp = RowObject(int(26117), metadata, source_data, additional_metadata)
+                temp = RowObject(int(26117), metadata, source_data, additional_metadata, expression_params)
 
 
                 with open("jsons/" + row[0] + ".json", "w") as outfile:
-                    data.append(json.dumps(temp.__dict__))
+                    # data.append(json.dumps(temp.__dict__))
                     outfile.write(json.dumps(temp.__dict__))
 
 
             i+= 1
 
-            return data
-
+            # return data
+            return
 
 class RowObject:
 
@@ -71,11 +73,12 @@ class RowObject:
     This is a sub-class that creates the fields for the metadata file that will be used in the json object class
     '''
 
-    def __init__(self, gnm_id, metadata, source_data, additional_metadata):
+    def __init__(self, gnm_id, metadata, source_data, additional_metadata, expression_params):
         self.genome_id = gnm_id
         self.source_data = source_data
         self.metadata = metadata
         self.additional_metadata = additional_metadata
+        self.expression_params = expression_params
         return
 
 JsonObject().add_data()
