@@ -1,7 +1,7 @@
 __author__ = 'AJ'
 import json, requests, os, time, csv, timeit
 from threading import Thread
-
+import threading
 
 
 def user_data(mfile):
@@ -170,14 +170,11 @@ def check_status(username, token, wid, wait, base_url):
     while running:
         status = job_fetch(username, token, wid, base_url)["status"]
         time.sleep(wait)
-        # print "Running"
         if status == "Completed":
-            running = False
             return status
         elif status == "Running":
             continue
         else:
-            running = False
             return status
 
 
@@ -191,7 +188,7 @@ def write_log(exp_name, wid, status, comp_dict, elapsed):
             comp_log.close()
     else:
         with open("Failed_Log.txt", "a") as comp_log:
-            comp_log.write(exp_name + "\n" + str(wid)+ "\n" + status + "\n")
+            comp_log.write(exp_name + "\n" + str(wid) + "\n" + status + "\n")
             comp_log.write(comp_dict)
             comp_log.write("\n" + "Time elapsed: " + str(elapsed) + "\n")
             comp_log.write("\n" + "#####" + "\n")
@@ -227,12 +224,13 @@ def split_jobs(file_list, size):
 
 
 def run_all(min, max):
+    lock = threading.Lock()
     start_time = timeit.default_timer()
     login = user_data("login.json")
     username = login["username"]
     base_url = "https://geco.iplantcollaborative.org/coge/"
     json_file_list = file_list(sub_dir)
-    wait = 10
+    wait = 5
 
     for i in range(min, max+1):
         token = get_token(username, password=login["password"], key=login["key"], secret=login["secret"])
@@ -243,29 +241,29 @@ def run_all(min, max):
         nb_check = notebook_search(term, base_url, username, token)
         if nb_check == False:
             nb_id = notebook_add(add_meta, username, token, base_url)["id"]
-            print nb_id
+            print "Notebook ID: " + str(nb_id)
         else:
             nb_id = notebook_search(term, base_url, username, token)["id"]
         exp_name = pri_meta["name"]
-        print exp_name
+        print "Eexperiment Name: "+ exp_name
         wid = experiment_add(username, token, metadata, base_url, nb_id)['id']
-        print wid
+        print "Work ID " + str(wid)
         status = check_status(username, token, wid, wait, base_url)
-        if status == "Complete":
-            print exp_name + ":" + wid + " " + "Complete"
         comp_dict = json.dumps(job_fetch(username, token, wid, base_url))
-        elapsed = timeit.default_timer() - start_time
-        write_log(exp_name, wid, status, comp_dict, elapsed)
 
+        if status == "Complete":
+            elapsed = timeit.default_timer() - start_time
+            lock.acquire()
+            write_log(exp_name, wid, status, comp_dict, elapsed)
+            lock.release()
+        print exp_name + ":" + str(wid) + " " + "complete"
 
 
 
 if __name__=='__main__':
-    sub_dir = "C:\Users\AJ\PycharmProjects\Encode\Test J" # for testing with chicken
     # sub_dir = "C:\Users\AJ\PycharmProjects\Encode\jsons"
     # sub_dir="/home/ajstangl/encode/jsons" # for geco
-    # sub_dir = "C:\Users\AJ\PycharmProjects\Encode\Test J"
-
+    sub_dir = "C:\Users\AJ\PycharmProjects\Encode\Test J"
     total_files = len(file_list(sub_dir))
     temp = split_jobs(range(total_files), 4)
     w1 = temp[0]
