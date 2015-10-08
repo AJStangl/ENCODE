@@ -35,7 +35,7 @@ def metadata_extractor(exp_url_list):
     : Write: metadata_data.txt
     """
     HEADERS = {'accept': 'application/json'}
-    with open('metadata_encode.txt', 'w') as metadata:
+    with open('metadata_encode.tsv', 'w') as metadata:
         metadata.write(
             "Name\tExperiment_Name\tDescription\tAssay\tBiological_Replicate\tTechnical_Replicate\t"
             "Cell_Type\tHealth_Status\tLife_Stage\tAge\tSex\tBio_Sample\tTarget\tAssembly\tGenome_Annotation"
