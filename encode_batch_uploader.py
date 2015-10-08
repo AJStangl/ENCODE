@@ -136,6 +136,7 @@ def experiment_add(username, token, metadata, base_url, nb_id):
     data = json.loads(data)
     data["notebook_id"] = int(nb_id)
     data = json.dumps(data)
+
     url = base_url + "api/v1/experiments?username=%s&token=%s" % (username, token)
     headers = {'Content-type': 'application/json'}
     r = requests.put(url, data, headers=headers)
@@ -154,6 +155,16 @@ def job_fetch(username, token, wid, base_url):
     r = requests.get(url)
     comp_dict = r.json()
     return comp_dict
+
+
+def experiment_search(username, token, exp_name,base_url):
+    url = base_url + "api/v1/experiments/search/%s/?username=%s&token=%s" % (exp_name,username, token)
+    r = requests.get(url)
+    resp_dict = r.json()
+    try:
+        return resp_dict["experiments"][0]
+    except IndexError:
+        return False
 
 
 def check_status(username, token, wid, wait, base_url):
@@ -230,7 +241,7 @@ def run_all(min, max, T):
     username = login["username"]
     base_url = "https://geco.iplantcollaborative.org/coge/"
     json_file_list = file_list(sub_dir)
-    wait = 5
+    wait = 60
 
     for i in range(min, max+1):
         token = get_token(username, password=login["password"], key=login["key"], secret=login["secret"])
@@ -244,9 +255,12 @@ def run_all(min, max, T):
             print "Notebook ID: " + str(nb_id)
         else:
             nb_id = notebook_search(term, base_url, username, token)["id"]
+
         exp_name = pri_meta["name"]
-        print "Eexperiment Name: " + exp_name
+        print "Experiment Name: " + exp_name
+
         wid = experiment_add(username, token, metadata, base_url, nb_id)['id']
+
         print "Work ID: " + str(wid)
         status = check_status(username, token, wid, wait, base_url)
         comp_dict = json.dumps(job_fetch(username, token, wid, base_url))
@@ -260,9 +274,9 @@ def run_all(min, max, T):
             lock.release()
 
 if __name__=='__main__':
-    # sub_dir = "C:\Users\AJ\PycharmProjects\Encode\jsons"
-    sub_dir="/home/ajstangl/encode/jsons" # for geco
-    # sub_dir = "C:\Users\AJ\PycharmProjects\Encode\Test J"
+    sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
+    # sub_dir='/home/ajstangl/encode/jsons' # for geco
+    # sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\Test J'
     total_files = len(file_list(sub_dir))
     temp = split_jobs(range(total_files), 4)
     w1 = temp[0]
