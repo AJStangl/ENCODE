@@ -178,20 +178,20 @@ def check_status(username, token, wid, wait, base_url):
             return status
 
 
-def write_log(exp_name, wid, status, comp_dict, elapsed):
+def write_log(exp_name, wid, status, comp_dict, elapsed, T):
     if status == "Completed":
         with open("Completed_Log.txt", "a") as comp_log:
             comp_log.write(exp_name + "\n" + str(wid) + "\n" + status + "\n")
             comp_log.write(comp_dict)
             comp_log.write("\n" + "Time elapsed: " + str(elapsed) + "\n")
-            comp_log.write("\n" + "#####" + "\n")
+            comp_log.write(T + "\n")
             comp_log.close()
     else:
         with open("Failed_Log.txt", "a") as comp_log:
             comp_log.write(exp_name + "\n" + str(wid) + "\n" + status + "\n")
             comp_log.write(comp_dict)
             comp_log.write("\n" + "Time elapsed: " + str(elapsed) + "\n")
-            comp_log.write("\n" + "#####" + "\n")
+            comp_log.write(T + "\n")
             comp_log.close()
     return
 
@@ -223,7 +223,7 @@ def split_jobs(file_list, size):
     return ranges
 
 
-def run_all(min, max):
+def run_all(min, max, T):
     lock = threading.Lock()
     start_time = timeit.default_timer()
     login = user_data("login.json")
@@ -245,25 +245,24 @@ def run_all(min, max):
         else:
             nb_id = notebook_search(term, base_url, username, token)["id"]
         exp_name = pri_meta["name"]
-        print "Eexperiment Name: "+ exp_name
+        print "Eexperiment Name: " + exp_name
         wid = experiment_add(username, token, metadata, base_url, nb_id)['id']
-        print "Work ID " + str(wid)
+        print "Work ID: " + str(wid)
         status = check_status(username, token, wid, wait, base_url)
         comp_dict = json.dumps(job_fetch(username, token, wid, base_url))
 
-        if status == "Complete":
+        print status
+
+        if status == "Completed":
             elapsed = timeit.default_timer() - start_time
             lock.acquire()
-            write_log(exp_name, wid, status, comp_dict, elapsed)
+            write_log(exp_name, wid, status, comp_dict, elapsed, T)
             lock.release()
-        print exp_name + ":" + str(wid) + " " + "complete"
-
-
 
 if __name__=='__main__':
-    # sub_dir = "C:\Users\AJ\PycharmProjects\Encode\jsons"
+    sub_dir = "C:\Users\AJ\PycharmProjects\Encode\jsons"
     # sub_dir="/home/ajstangl/encode/jsons" # for geco
-    sub_dir = "C:\Users\AJ\PycharmProjects\Encode\Test J"
+    # sub_dir = "C:\Users\AJ\PycharmProjects\Encode\Test J"
     total_files = len(file_list(sub_dir))
     temp = split_jobs(range(total_files), 4)
     w1 = temp[0]
@@ -271,10 +270,10 @@ if __name__=='__main__':
     w3 = temp[2]
     w4 = temp[3]
 
-    p1 = Thread(target=run_all, args=(min(w1), max(w1)))
-    p2 = Thread(target=run_all, args=(min(w2), max(w2)))
-    p3 = Thread(target=run_all, args=(min(w3), max(w3)))
-    p4 = Thread(target=run_all, args=(min(w4), max(w4)))
+    p1 = Thread(target=run_all, args=(min(w1), max(w1), "T1"))
+    p2 = Thread(target=run_all, args=(min(w2), max(w2), "T2"))
+    p3 = Thread(target=run_all, args=(min(w3), max(w3), "T3"))
+    p4 = Thread(target=run_all, args=(min(w4), max(w4), "T4"))
 
     p1.start()
     time.sleep(10)
@@ -283,52 +282,3 @@ if __name__=='__main__':
     p3.start()
     time.sleep(10)
     p4.start()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

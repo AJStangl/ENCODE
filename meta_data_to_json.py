@@ -17,7 +17,7 @@ class JsonObject:
 
     def add_data(self):
 
-        with open("test_3.txt", "r") as infile:
+        with open("encode_test.txt", "r") as infile:
             headings = next(infile)
             reader = csv.reader(infile, delimiter='\t')
             i = 0
@@ -51,16 +51,14 @@ class JsonObject:
 
                 expression_params = {"-Q": 20}
 
-
                 source_data = [{"type": "http", "path": row[20]}]
 
-                temp = RowObject(int(26119), metadata, source_data, additional_metadata, expression_params)
+                temp = RowObject(int(26117), metadata, source_data, additional_metadata, expression_params)
 
-                with open("Test J/" + row[0] + ".json", "w") as outfile:
+                with open("jsons/" + row[0] + ".json", "w") as outfile:
                 # with open("jsons/" + row[0] + ".json", "w") as outfile:
                     # data.append(json.dumps(temp.__dict__))
                     outfile.write(json.dumps(temp.__dict__))
-
 
             i+= 1
 
