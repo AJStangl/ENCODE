@@ -260,8 +260,8 @@ def run_all(min, max, T):
             lock.release()
 
 if __name__=='__main__':
-    sub_dir = "C:\Users\AJ\PycharmProjects\Encode\jsons"
-    # sub_dir="/home/ajstangl/encode/jsons" # for geco
+    # sub_dir = "C:\Users\AJ\PycharmProjects\Encode\jsons"
+    sub_dir="/home/ajstangl/encode/jsons" # for geco
     # sub_dir = "C:\Users\AJ\PycharmProjects\Encode\Test J"
     total_files = len(file_list(sub_dir))
     temp = split_jobs(range(total_files), 4)
