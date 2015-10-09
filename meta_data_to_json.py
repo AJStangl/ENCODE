@@ -17,17 +17,14 @@ class JsonObject:
 
     def add_data(self):
 
-        with open("encode_test_1.tsv", "r") as infile:
+        with open("encode_test_2.tsv", "r") as infile:
+        # with open("test_meta.tsv", "r") as infile: # for test
             headings = next(infile)
             reader = csv.reader(infile, delimiter='\t')
             i = 0
-            data = []
-
             for row in reader:
-
                 metadata = {"restricted": False, "name": row[0], "description": row[2], "version": row[18],
                             "source": "Encode"}
-
                 additional_metadata = [{"type": "Cell Type", "text": row[6]},
                                        {"type": "Biological Replicate", "text": row[4]},
                                        {"type": "Technical Replicate", "text": row[5]},
@@ -50,20 +47,14 @@ class JsonObject:
                                        {"type": "Experiment Name", "text": row[1]}]
 
                 expression_params = {"-Q": 20}
-
                 source_data = [{"type": "http", "path": row[20]}]
-
                 temp = RowObject(int(26117), metadata, source_data, additional_metadata, expression_params)
-
                 with open("jsons/" + row[0] + ".json", "w") as outfile:
-                # with open("jsons/" + row[0] + ".json", "w") as outfile:
-                    # data.append(json.dumps(temp.__dict__))
                     outfile.write(json.dumps(temp.__dict__))
 
             i+= 1
-
-            # return data
             return
+
 
 class RowObject:
 
