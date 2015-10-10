@@ -1,7 +1,5 @@
 __author__ = 'AJ'
-import json, requests, os, time, csv, timeit
-from threading import Thread
-import threading
+import json, requests, os, time, timeit
 
 
 def user_data(mfile):
@@ -38,8 +36,9 @@ def file_list(sub_dir):
     return json_file_list
 
 
-def max_file_length(sub_dir,json_file_list):
-    max_file_lenght = len(json_file_list(sub_dir))
+def max_file_length(sub_dir, json_file_list):
+    max_file_length = len(json_file_list(sub_dir))
+    return max_file_length
 
 
 def open_metadata_file(i, sub_dir, json_file_list):
@@ -157,8 +156,8 @@ def job_fetch(username, token, wid, base_url):
     return comp_dict
 
 
-def experiment_search(username, token, exp_name,base_url):
-    url = base_url + "api/v1/experiments/search/%s/?username=%s&token=%s" % (exp_name,username, token)
+def experiment_search(username, token, exp_name, base_url):
+    url = base_url + "api/v1/experiments/search/%s/?username=%s&token=%s" % (exp_name, username, token)
     r = requests.get(url)
     resp_dict = r.json()
     try:
@@ -207,11 +206,10 @@ def write_log(exp_name, wid, status, comp_dict, elapsed):
 
 
 def next_job(start, status):
-    '''
-
+    """
     :param status: The status of
     :return: i
-    '''
+    """
     if status == "Completed":
         start += 1
     elif status == "Failed":
@@ -221,7 +219,7 @@ def next_job(start, status):
 
 def split_jobs(file_list, size):
     """
-    :param jobs: The return of max_files file_list function. Specifies how many tasks need to be performed
+    :param file_list: The return of max_files file_list function. Specifies how many tasks need to be performed
     :param size: The number of task to be performed
     :return: A list of ranges that speficy the number of tasks
     """
@@ -238,7 +236,7 @@ def run_all(min, max):
     login = user_data("login.json")
     username = login["username"]
     base_url = "https://geco.iplantcollaborative.org/coge/"
-    sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
+    sub_dir = '/home/ajstangl/encode/jsons'
     json_file_list = file_list(sub_dir)
     wait = 60
 
@@ -272,19 +270,25 @@ def run_all(min, max):
 
 
 
-if __name__=='__main__':
-    # sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
-    sub_dir='/home/ajstangl/encode/jsons' # for geco
+if __name__ == '__main__':
     sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
-    total_files = len(file_list(sub_dir))
+    # sub_dir = '/home/ajstangl/encode/jsons'  # for geco
+    json_file_list = file_list(sub_dir)
+    total_files = max_file_length(sub_dir, json_file_list)
     temp = split_jobs(range(total_files), 4)
-    print "paramaters for run all are listed below: "
-    for elem in temp:
-        print str(min(elem)) + ", " + str(max(elem))
-    min = raw_input("Enter min Range: ")
-    max = raw_input("Enter Max Range: ")
-    run_all(min, max)
 
+    print json_file_list
+    print total_files
+    print temp
+
+    # print "paramaters for run all are listed below: "
+    # for elem in temp:
+    #     print str(min(elem)) + ", " + str(max(elem))
+    # min = raw_input("Enter min Range: ")
+    # min = int(min)
+    # max = raw_input("Enter Max Range: ")
+    # max = int(max)
+    # run_all(min, max)
 
 
 
