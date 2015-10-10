@@ -1,5 +1,5 @@
 __author__ = 'AJ'
-import json, requests, os, time, timeit
+import json, requests, os, time, timeit, csv
 
 
 def user_data(mfile):
@@ -33,12 +33,16 @@ def file_list(sub_dir):
     :return:File List
     '''
     json_file_list = os.listdir(sub_dir)
-    return json_file_list
+    json_files = []
+    for elem in json_file_list:
+        json_files.append(elem)
+
+    return json_files
 
 
-def max_file_length(sub_dir, json_file_list):
-    max_file_length = len(json_file_list(sub_dir))
-    return max_file_length
+def max_file_length(json_file_list):
+    num_files = len(json_file_list)
+    return num_files
 
 
 def open_metadata_file(i, sub_dir, json_file_list):
@@ -188,33 +192,41 @@ def check_status(username, token, wid, wait, base_url):
             return status
 
 
-def write_log(exp_name, wid, status, comp_dict, elapsed):
+def write_log(exp_name, wid, status, comp_dict, elapsed, term):
     if status == "Completed":
-        with open("Completed_Log.txt", "a") as comp_log:
-            comp_log.write(exp_name + "\n" + str(wid) + "\n" + status + "\n")
-            comp_log.write(comp_dict)
-            comp_log.write("\n" + "Time elapsed: " + str(elapsed) + "\n")
-            comp_log.write("\n")
-            comp_log.close()
+        cdat = []
+        comp_dict = json.dumps(comp_dict)
+        cl = [exp_name, wid, status, comp_dict, elapsed]
+        cdat.append(cl)
+
+        with open("logs/" + "Completed_Log_" + term + ".tsv" , "ab") as f:
+            comp_log = csv.writer(f, lineterminator="\n", delimiter='\t')
+            for elem in cdat:
+                comp_log.writerow(elem)
+            f.close()
+
     else:
-        with open("Failed_Log.txt", "a") as comp_log:
-            comp_log.write(exp_name + "\n" + str(wid) + "\n" + status + "\n")
-            comp_log.write(comp_dict)
-            comp_log.write("\n" + "Time elapsed: " + str(elapsed) + "\n")
-            comp_log.write("\n")
-            comp_log.close()
+        fdat = []
+        comp_dict = json.dumps(comp_dict)
+        fl = [exp_name, wid, status, comp_dict, elapsed]
+        fdat.append(fl)
+        with open("logs/" + "Completed_Log_" + term + ".tsv", "ab") as f:
+            comp_log = csv.writer(f, lineterminator="\n", delimiter='\t')
+            for elem in fdat:
+                comp_log.writerow(elem)
+            f.close()
 
 
-def next_job(start, status):
+def next_job(i, status):
     """
     :param status: The status of
     :return: i
     """
     if status == "Completed":
-        start += 1
+        i += 1
     elif status == "Failed":
-        start += 1
-    return start
+        i += 1
+    return i
 
 
 def split_jobs(file_list, size):
@@ -231,16 +243,18 @@ def split_jobs(file_list, size):
     return ranges
 
 
-def run_all(min, max):
+def run_all():
     start_time = timeit.default_timer()
     login = user_data("login.json")
     username = login["username"]
     base_url = "https://geco.iplantcollaborative.org/coge/"
     sub_dir = '/home/ajstangl/encode/jsons'
+    # sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
     json_file_list = file_list(sub_dir)
+    total_files = max_file_length(json_file_list)
     wait = 60
-
-    for i in range(min, max+1):
+    i = 0
+    while i < total_files:
         token = get_token(username, password=login["password"], key=login["key"], secret=login["secret"])
         metadata = open_metadata_file(i, sub_dir, json_file_list)
         pri_meta = primary_metadata(metadata)
@@ -252,6 +266,7 @@ def run_all(min, max):
             print "Notebook ID: " + str(nb_id)
         else:
             nb_id = notebook_search(term, base_url, username, token)["id"]
+            print nb_id
 
         exp_name = pri_meta["name"]
         print "Experiment Name: " + exp_name
@@ -262,33 +277,20 @@ def run_all(min, max):
         status = check_status(username, token, wid, wait, base_url)
         comp_dict = json.dumps(job_fetch(username, token, wid, base_url))
 
-        print status
+        print str(wid) + " " + status
 
         if status == "Completed":
             elapsed = timeit.default_timer() - start_time
-            write_log(exp_name, wid, status, comp_dict, elapsed)
-
+            write_log(exp_name, wid, status, comp_dict, elapsed, term)
+        i = next_job(i, status)
 
 
 if __name__ == '__main__':
-    sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
-    # sub_dir = '/home/ajstangl/encode/jsons'  # for geco
-    json_file_list = file_list(sub_dir)
-    total_files = max_file_length(sub_dir, json_file_list)
-    temp = split_jobs(range(total_files), 4)
-
-    print json_file_list
-    print total_files
-    print temp
-
-    # print "paramaters for run all are listed below: "
-    # for elem in temp:
-    #     print str(min(elem)) + ", " + str(max(elem))
-    # min = raw_input("Enter min Range: ")
-    # min = int(min)
-    # max = raw_input("Enter Max Range: ")
-    # max = int(max)
-    # run_all(min, max)
-
+    # sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
+    # # sub_dir = '/home/ajstangl/encode/jsons'  # for geco
+    # json_files = file_list(sub_dir)
+    # total_files = max_file_length(json_files)
+    # temp = split_jobs(range(total_files), 4)
+    run_all()
 
 
