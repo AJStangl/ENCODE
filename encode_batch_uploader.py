@@ -22,9 +22,16 @@ def get_token(username, password, key, secret):
     payload = {'grant_type':"client_credentials",'username': username, 'password': password, 'scope': 'PRODUCTION'}
     auth = (key, secret)
     r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
-    content_dict = json.loads(r.content)
-    token = content_dict["access_token"]
-    return token
+    r = r.json()
+    return r
+
+
+def refresh_token(r_token, key, secret):
+    payload = {'grant_type': 'refresh_token', 'refresh_token': r_token}
+    auth = (key, secret)
+    r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
+    r = r.json()
+    return r
 
 
 def file_list(sub_dir):
@@ -182,17 +189,14 @@ def check_status(username, token, wid, wait, base_url):
 
     running = True
     while running:
-        try:
-            status = job_fetch(username, token, wid, base_url)["status"]
-            time.sleep(wait)
-            if status == "Completed":
-                return status
-            elif status == "Running":
-                continue
-            else:
-                return status
-        except KeyError:
+        status = job_fetch(username, token, wid, base_url)["status"]
+        time.sleep(wait)
+        if status == "Completed":
+            return status
+        elif status == "Running":
             continue
+        else:
+            return status
 
 
 def write_log(exp_name, wid, status, comp_dict, elapsed, term):
@@ -258,7 +262,10 @@ def run_all():
     wait = 60
     i = 0
     while i < total_files:
-        token = get_token(username, password=login["password"], key=login["key"], secret=login["secret"])
+        token_dict = get_token(username, password=login["password"], key=login["key"], secret=login["secret"])
+        r_token = token_dict['refresh_token']
+        refresh_dict = refresh_token(r_token, key=login["key"], secret=login["secret"])
+        token = refresh_dict['access_token']
         metadata = open_metadata_file(i, sub_dir, json_file_list)
         pri_meta = primary_metadata(metadata)
         add_meta = additional_metadata(metadata)

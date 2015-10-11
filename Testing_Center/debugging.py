@@ -1,52 +1,52 @@
 # __author__ = 'AJ'
-# import json, requests, os, timeit, csv
-# from encode_batch_uploader import notebook_search,get_token, open_metadata_file, user_data,\
-#     file_list, primary_metadata, additional_metadata, notebook_add, check_status, job_fetch
-#
-# start_time = timeit.default_timer()
-# sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
-# login = user_data("login.json")
-# username = login["username"]
-# base_url = "https://geco.iplantcollaborative.org/coge/"
-# json_file_list = file_list(sub_dir)
-# i = 0
-# token = get_token(username, password=login["password"], key=login["key"], secret=login["secret"])
-# metadata = open_metadata_file(i, sub_dir, json_file_list)
-# pri_meta = primary_metadata(metadata)
-# add_meta = additional_metadata(metadata)
-# term = add_meta["Encode Biosample ID"]
-# nb_check = notebook_search(term, base_url, username, token)
-# nb_id = notebook_search(term, base_url, username, token)['id']
-#
-# wid = 31244
-# status = check_status(username,token,wid,0,base_url)
-# comp_dict = job_fetch(username, token, wid, base_url)
-# exp_name = pri_meta["name"]
-# elapsed = timeit.default_timer() - start_time
-#
-# test = []
-#
-# comp_dict = json.dumps(comp_dict)
-#
-#
-# l = [exp_name, wid, status, comp_dict, elapsed]
-# test.append(l)
-#
-# with open("test.tsv", "wb") as out:
-#     writer = csv.writer(out, lineterminator="\n", delimiter='\t')
-#     for elem in test:
-#         writer.writerow(elem)
-#     out.close()
-#
+import json, requests
+def user_data(mfile):
+    '''
+    This function will return the user data for login
+    :param file: TSV file with login information
+    :return: Dict of Login Information
+    '''
+    login = {}
+    with open(mfile, "r") as info:
+        login = json.load(info)
+        info.close()
+    return login
+
+def get_token(username, password, key, secret):
+    '''
+    This Function Retrieves the access token needed to upload data
+    '''
+    payload = {'grant_type':"client_credentials",'username': username, 'password': password, 'scope': 'PRODUCTION'}
+    auth = (key, secret)
+    r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
+    r = r.json()
+    return r
+
+def refresh_token(r_token, key, secret, username, password):
+    payload = {'grant_type': 'refresh_token', 'refresh_token':r_token}
+    auth = (key, secret)
+    r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
+    r = r.json()
+    return r
+
+
+user = user_data('login.json')
+username = user["username"]
+password = user["password"]
+secret = user["secret"]
+key = user["key"]
+
+while True:
+    token_dict = get_token(username,password,key,secret)
+    print token_dict
+    token = token_dict['access_token']
+    r_token = token_dict['refresh_token']
+    print token
+    r_dict = refresh_token(r_token,key,secret,username,password)
+    print r_dict
+    print r_dict['access_token']
 
 
 
 
 
-var = 10                    # Second Example
-while var > 0:
-   var = var -1
-   if var == 5:
-      continue
-   print 'Current variable value :', var
-print "Good bye!"
