@@ -182,14 +182,17 @@ def check_status(username, token, wid, wait, base_url):
 
     running = True
     while running:
-        status = job_fetch(username, token, wid, base_url)["status"]
-        time.sleep(wait)
-        if status == "Completed":
-            return status
-        elif status == "Running":
+        try:
+            status = job_fetch(username, token, wid, base_url)["status"]
+            time.sleep(wait)
+            if status == "Completed":
+                return status
+            elif status == "Running":
+                continue
+            else:
+                return status
+        except KeyError:
             continue
-        else:
-            return status
 
 
 def write_log(exp_name, wid, status, comp_dict, elapsed, term):
