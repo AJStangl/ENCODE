@@ -281,11 +281,13 @@ def run_all():
     wait = 60
     i = 0
     while i < total_files:
-        token_dict = get_token(username, password=login["password"], key=login["key"], secret=login["secret"])
-        r_token = token_dict['refresh_token']
-        refresh_dict = refresh_token(r_token, key=login["key"], secret=login["secret"])
-        token = refresh_dict['access_token']
-        print token
+        try:
+            token_dict = get_token(username, password=login["password"], key=login["key"], secret=login["secret"])
+            r_token = token_dict['refresh_token']
+            refresh_dict = refresh_token(r_token, key=login["key"], secret=login["secret"])
+            token = refresh_dict['access_token']
+        except KeyError:
+            continue
         metadata = open_metadata_file(i, sub_dir, json_file_list)
         pri_meta = primary_metadata(metadata)
         add_meta = additional_metadata(metadata)
