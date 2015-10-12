@@ -1,42 +1,44 @@
 # __author__ = 'AJ'
 import json, requests, os
-from encode_batch_uploader import file_list
-# def user_data(mfile):
-#     '''
-#     This function will return the user data for login
-#     :param file: TSV file with login information
-#     :return: Dict of Login Information
-#     '''
-#     login = {}
-#     with open(mfile, "r") as info:
-#         login = json.load(info)
-#         info.close()
-#     return login
-#
-# def get_token(username, password, key, secret):
-#     '''
-#     This Function Retrieves the access token needed to upload data
-#     '''
-#     payload = {'grant_type':"client_credentials",'username': username, 'password': password, 'scope': 'PRODUCTION'}
-#     auth = (key, secret)
-#     r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
-#     r = r.json()
-#     return r
-#
-# def refresh_token(r_token, key, secret, username, password):
-#     payload = {'grant_type': 'refresh_token', 'refresh_token':r_token}
-#     auth = (key, secret)
-#     r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
-#     r = r.json()
-#     return r
-#
-#
-# user = user_data('login.json')
-# username = user["username"]
-# password = user["password"]
-# secret = user["secret"]
-# key = user["key"]
-#
+from encode_batch_uploader import file_list, check_status
+def user_data(mfile):
+    '''
+    This function will return the user data for login
+    :param file: TSV file with login information
+    :return: Dict of Login Information
+    '''
+
+    with open(mfile, "r") as info:
+        login = json.load(info)
+        info.close()
+    return login
+
+def get_token(username, password, key, secret):
+    '''
+    This Function Retrieves the access token needed to upload data
+    '''
+    payload = {'grant_type':"client_credentials",'username': username, 'password': password, 'scope': 'PRODUCTION'}
+    auth = (key, secret)
+    r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
+    r = r.json()
+    return r
+
+def refresh_token(r_token, key, secret, username, password):
+    payload = {'grant_type': 'refresh_token', 'refresh_token':r_token}
+    auth = (key, secret)
+    r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
+    r = r.json()
+    return r
+
+base_url = "https://geco.iplantcollaborative.org/coge/"
+login = user_data('login.json')
+user = user_data('login.json')
+username = user["username"]
+password = user["password"]
+secret = user["secret"]
+key = user["key"]
+status = check_status(username,31333,1,base_url,login)
+print status['status']
 # while True:
 #     token_dict = get_token(username,password,key,secret)
 #     print token_dict
@@ -47,14 +49,13 @@ from encode_batch_uploader import file_list
 #     print r_dict
 #     print r_dict['access_token']
 
-
-sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\/1_test'
-json_file_list = file_list(sub_dir)
-max_files = len(json_file_list)
-
-i = 0
-while i < max_files:
-    print json_file_list[i]
-    print i
-    os.remove(sub_dir + "/"+ json_file_list[i])
-    i = i + 1
+# sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\/1_test'
+# json_file_list = file_list(sub_dir)
+# max_files = len(json_file_list)
+#
+# i = 0
+# while i < max_files:
+#     print json_file_list[i]
+#     print i
+#     os.remove(sub_dir + "/"+ json_file_list[i])
+#     i = i + 1

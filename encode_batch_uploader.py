@@ -193,13 +193,17 @@ def check_status(username, wid, wait, base_url, login):
 
     running = True
     while running:
-        status = job_fetch(username, wid, base_url, login)["status"]
+        try:
+            status = job_fetch(username, wid, base_url, login)["status"]
+        except KeyError:
+            continue
         time.sleep(wait)
         if status == "Completed":
             return status
         elif status == "Running":
             continue
         else:
+            print status
             return status
 
 
@@ -281,6 +285,7 @@ def run_all():
         r_token = token_dict['refresh_token']
         refresh_dict = refresh_token(r_token, key=login["key"], secret=login["secret"])
         token = refresh_dict['access_token']
+        print token
         metadata = open_metadata_file(i, sub_dir, json_file_list)
         pri_meta = primary_metadata(metadata)
         add_meta = additional_metadata(metadata)
@@ -299,12 +304,7 @@ def run_all():
         wid = experiment_add(username, token, metadata, base_url, nb_id)['id']
 
         print "Work ID: " + str(wid)
-        try:
-            status = check_status(username,wid, wait, base_url, login)
-        except KeyError:
-            print job_fetch(username, wid, base_url, login)
-            print "Error Loading Experiment: %s \n Work Id: %s " % (exp_name, str(wid))
-            continue
+        status = check_status(username,wid, wait, base_url, login)
         comp_dict = json.dumps(job_fetch(username, wid, base_url, login))
 
         print str(wid) + " " + status
