@@ -199,6 +199,7 @@ def check_status(username, token, wid, wait, base_url):
             return status
 
 
+
 def write_log(exp_name, wid, status, comp_dict, elapsed, term):
     if status == "Completed":
         cdat = []
@@ -284,7 +285,11 @@ def run_all():
         wid = experiment_add(username, token, metadata, base_url, nb_id)['id']
 
         print "Work ID: " + str(wid)
-        status = check_status(username, token, wid, wait, base_url)
+        try:
+            status = check_status(username, token, wid, wait, base_url)
+        except KeyError:
+            print "Error Loading %s " % exp_name
+            continue
         comp_dict = json.dumps(job_fetch(username, token, wid, base_url))
 
         print str(wid) + " " + status
@@ -292,6 +297,7 @@ def run_all():
         if status == "Completed":
             elapsed = timeit.default_timer() - start_time
             write_log(exp_name, wid, status, comp_dict, elapsed, term)
+        os.remove(sub_dir + json_file_list[i])
         i = next_job(i, status)
 
 
