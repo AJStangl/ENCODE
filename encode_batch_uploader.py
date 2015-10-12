@@ -297,8 +297,8 @@ def run_all():
         if status == "Completed":
             elapsed = timeit.default_timer() - start_time
             write_log(exp_name, wid, status, comp_dict, elapsed, term)
-        os.remove(sub_dir + json_file_list[i])
-        i = next_job(i, status)
+            os.remove(sub_dir + "/" + json_file_list[i])
+            i = next_job(i, status)
 
 
 
