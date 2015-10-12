@@ -154,13 +154,17 @@ def experiment_add(username, token, metadata, base_url, nb_id):
     return rep_dict
 
 
-def job_fetch(username, token, wid, base_url):
+def job_fetch(username, wid, base_url, login):
     '''
     :param username: the username for auth
     :param token: The token provided from get_token()
     :param wid: The word id provided by experiment_add()
     :return: A JSON (dict) of the response from experiment_fetch
     '''
+    token_dict = get_token(username, password=login["password"], key=login["key"], secret=login["secret"])
+    r_token = token_dict['refresh_token']
+    refresh_dict = refresh_token(r_token, key=login["key"], secret=login["secret"])
+    token = refresh_dict['access_token']
     url = base_url + "api/v1/jobs/%d/?username=%s&token=%s" % (wid, username, token)
     r = requests.get(url)
     comp_dict = r.json()
@@ -177,7 +181,7 @@ def experiment_search(username, token, exp_name, base_url):
         return False
 
 
-def check_status(username, token, wid, wait, base_url):
+def check_status(username, wid, wait, base_url, login):
     '''
 
     :param username:Your iPlant Username
@@ -189,7 +193,7 @@ def check_status(username, token, wid, wait, base_url):
 
     running = True
     while running:
-        status = job_fetch(username, token, wid, base_url)["status"]
+        status = job_fetch(username, wid, base_url, login)["status"]
         time.sleep(wait)
         if status == "Completed":
             return status
@@ -197,7 +201,6 @@ def check_status(username, token, wid, wait, base_url):
             continue
         else:
             return status
-
 
 
 def write_log(exp_name, wid, status, comp_dict, elapsed, term):
@@ -297,11 +300,12 @@ def run_all():
 
         print "Work ID: " + str(wid)
         try:
-            status = check_status(username, token, wid, wait, base_url)
+            status = check_status(username,wid, wait, base_url, login)
         except KeyError:
-            print "Error Loading %s " % exp_name
+            print job_fetch(username, wid, base_url, login)
+            print "Error Loading Experiment: %s \n Work Id: %s " % (exp_name, str(wid))
             continue
-        comp_dict = json.dumps(job_fetch(username, token, wid, base_url))
+        comp_dict = json.dumps(job_fetch(username, wid, base_url, login))
 
         print str(wid) + " " + status
 
@@ -309,7 +313,7 @@ def run_all():
             elapsed = timeit.default_timer() - start_time
             write_log(exp_name, wid, status, comp_dict, elapsed, term)
             os.remove(sub_dir + "/" + json_file_list[i])
-            i = next_job(i, status)
+        i = next_job(i, status)
 
 
 
