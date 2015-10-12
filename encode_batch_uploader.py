@@ -208,7 +208,7 @@ def check_status(username, wid, wait, base_url, login):
             return status
 
 
-def write_log(exp_name, wid, status, comp_dict, elapsed, term):
+def write_log(exp_name, wid, status, comp_dict, elapsed, term, add_meta):
     if status == "Completed":
         cdat = []
         comp_dict = json.dumps(comp_dict)

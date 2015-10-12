@@ -1,8 +1,9 @@
 # __author__ = 'AJ'
 import json, requests, os
-from encode_batch_uploader import file_list, check_status
+from encode_batch_uploader import file_list, check_status, job_fetch, additional_metadata, open_metadata_file
 def user_data(mfile):
     '''
+
     This function will return the user data for login
     :param file: TSV file with login information
     :return: Dict of Login Information
@@ -30,15 +31,18 @@ def refresh_token(r_token, key, secret, username, password):
     r = r.json()
     return r
 
-base_url = "https://geco.iplantcollaborative.org/coge/"
-login = user_data('login.json')
-user = user_data('login.json')
-username = user["username"]
-password = user["password"]
-secret = user["secret"]
-key = user["key"]
-status = check_status(username,31333,1,base_url,login)
-print status['status']
+# base_url = "https://geco.iplantcollaborative.org/coge/"
+# login = user_data('login.json')
+# user = user_data('login.json')
+# username = user["username"]
+# password = user["password"]
+# secret = user["secret"]
+# key = user["key"]
+# wid = 31333
+# status = job_fetch(username, wid, base_url, login)
+# print status
+
+
 # while True:
 #     token_dict = get_token(username,password,key,secret)
 #     print token_dict
@@ -49,8 +53,8 @@ print status['status']
 #     print r_dict
 #     print r_dict['access_token']
 
-# sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\/1_test'
-# json_file_list = file_list(sub_dir)
+sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\json'
+json_file_list = file_list(sub_dir)
 # max_files = len(json_file_list)
 #
 # i = 0
@@ -59,3 +63,10 @@ print status['status']
 #     print i
 #     os.remove(sub_dir + "/"+ json_file_list[i])
 #     i = i + 1
+
+metadata = open_metadata_file([0], sub_dir, json_file_list)
+
+
+add_meta = additional_metadata(metadata)
+print add_meta
+
