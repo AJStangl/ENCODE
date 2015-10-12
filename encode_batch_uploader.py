@@ -196,6 +196,7 @@ def check_status(username, wid, wait, base_url, login):
         try:
             status = job_fetch(username, wid, base_url, login)["status"]
         except KeyError:
+            print "Error in status get - Re-trying"
             continue
         time.sleep(wait)
         if status == "Completed":
@@ -287,6 +288,7 @@ def run_all():
             refresh_dict = refresh_token(r_token, key=login["key"], secret=login["secret"])
             token = refresh_dict['access_token']
         except KeyError:
+            print "Error in Token - Retrying"
             continue
         metadata = open_metadata_file(i, sub_dir, json_file_list)
         pri_meta = primary_metadata(metadata)
