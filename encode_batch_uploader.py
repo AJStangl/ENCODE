@@ -251,6 +251,17 @@ def split_jobs(file_list, size):
     return ranges
 
 
+def file_remove(sub_dir, i, json_file_list):
+    """
+    This function removes the json file if the job is completed
+    :param sub_dir: The sub directory where the json file is located
+    :param i: The current index of the file
+    :param json_file_list: The list of files associated with the index
+    :return:None
+    """
+    os.remove(sub_dir + "/" + json_file_list[i])
+
+
 def run_all():
     start_time = timeit.default_timer()
     login = user_data("login.json")
