@@ -22,22 +22,26 @@ def get_token(username, password, key, secret):
     payload = {'grant_type':"client_credentials",'username': username, 'password': password, 'scope': 'PRODUCTION'}
     auth = (key, secret)
     r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
-    print "token response"
-    print r
-    r = r.json()
-    print r
-    return r
+    response_dict = r.json()
+    with open("response_log.txt", "ab") as f:
+        f.write("token Response: " + str(r) + "\n")
+        f.write("response json: " + str(response_dict) + "\n")
+        f.close()
+    return response_dict
+
 
 
 def refresh_token(r_token, key, secret):
     payload = {'grant_type': 'refresh_token', 'refresh_token': r_token}
     auth = (key, secret)
     r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
-    print "refresh token response"
-    print r
-    r = r.json()
-    print r
-    return r
+    response_dict = r.json()
+    with open("response_log.txt", "ab") as f:
+        f.write("refresh token response: " + str(r) + "\n")
+        f.write("response json: " + str(response_dict) + "\n")
+        f.close()
+    return response_dict
+
 
 
 def file_list(sub_dir):
@@ -109,18 +113,19 @@ def notebook_add(add_meta, username, token, base_url):
 
     url = base_url + "api/v1/notebooks/?username=%s&token=%s" % (username, token)
     headers = {'Content-type': 'application/json'}
-
     nb_name = add_meta["Encode Biosample ID"]
     desc = add_meta["Cell Type"]
     tp = "mixed"
 
     pay = json.dumps(vars(Notebook(nb_name, desc, tp)))
     r = requests.put(url, pay, headers=headers)
-    print "notebook add response"
-    print r
-    resp_dict = r.json()
-    print resp_dict
-    return resp_dict
+    response_dict = r.json()
+
+    with open("response_log.txt", "ab") as f:
+        f.write("notebook add response :" + str(r) + "\n")
+        f.write("response json: " + str(response_dict) + "\n")
+        f.close()
+    return response_dict
 
 
 def notebook_search(term, base_url, username, token):
@@ -131,12 +136,13 @@ def notebook_search(term, base_url, username, token):
     """
     url = base_url + "api/v1/notebooks/search/%s/?username=%s&token=%s" % (term, username, token)
     r = requests.get(url)
-    print "notebook search response"
-    print r
-    resp_dict = r.json()
-    print resp_dict
+    response_dict = r.json()
+    with open("response_log.txt", "ab") as f:
+        f.write("notebook search response :" + str(r) + "\n")
+        f.write("response json: " + str(response_dict) + "\n")
+        f.close()
     try:
-        return resp_dict["notebooks"][0]
+        return response_dict["notebooks"][0]
     except IndexError:
         return False
 
@@ -162,11 +168,13 @@ def experiment_add(username, token, metadata, base_url, nb_id):
     url = base_url + "api/v1/experiments?username=%s&token=%s" % (username, token)
     headers = {'Content-type': 'application/json'}
     r = requests.put(url, data, headers=headers)
-    print "exp_add response"
-    print r
-    rep_dict = r.json()
-    print rep_dict
-    return rep_dict
+    response_dict = r.json()
+    with open("response_log.txt", "ab") as f:
+        f.write("experiment add response :" + str(r) + "\n")
+        f.write("response json: " + str(response_dict) + "\n")
+        f.close()
+
+    return response_dict
 
 
 def job_fetch(username, wid, base_url, login): # something fucks up here
@@ -212,7 +220,6 @@ def check_status(username, wid, wait, base_url, login): # something fucks up her
     running = True
     while running:
         try:
-            print "Checking Status"
             time.sleep(5)
             status = job_fetch(username, wid, base_url, login)["status"]
             print status
