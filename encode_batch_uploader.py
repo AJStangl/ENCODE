@@ -23,10 +23,10 @@ def get_token(username, password, key, secret):
     auth = (key, secret)
     r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
     response_dict = r.json()
-    with open("response_log.txt", "ab") as f:
-        f.write("token Response: " + str(r) + "\n")
-        f.write("response json: " + str(response_dict) + "\n")
-        f.close()
+    # with open("response_log.txt", "ab") as f:
+    #     f.write("token Response: " + str(r) + "\n")
+    #     f.write("response json: " + str(response_dict) + "\n")
+    #     f.close()
     return response_dict
 
 
@@ -36,10 +36,10 @@ def refresh_token(r_token, key, secret):
     auth = (key, secret)
     r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
     response_dict = r.json()
-    with open("response_log.txt", "ab") as f:
-        f.write("refresh token response: " + str(r) + "\n")
-        f.write("response json: " + str(response_dict) + "\n")
-        f.close()
+    # with open("response_log.txt", "ab") as f:
+    #     f.write("refresh token response: " + str(r) + "\n")
+    #     f.write("response json: " + str(response_dict) + "\n")
+    #     f.close()
     return response_dict
 
 
@@ -120,11 +120,11 @@ def notebook_add(add_meta, username, token, base_url):
     pay = json.dumps(vars(Notebook(nb_name, desc, tp)))
     r = requests.put(url, pay, headers=headers)
     response_dict = r.json()
-
-    with open("response_log.txt", "ab") as f:
-        f.write("notebook add response :" + str(r) + "\n")
-        f.write("response json: " + str(response_dict) + "\n")
-        f.close()
+    #
+    # with open("response_log.txt", "ab") as f:
+    #     f.write("notebook add response :" + str(r) + "\n")
+    #     f.write("response json: " + str(response_dict) + "\n")
+    #     f.close()
     return response_dict
 
 
@@ -137,10 +137,10 @@ def notebook_search(term, base_url, username, token):
     url = base_url + "api/v1/notebooks/search/%s/?username=%s&token=%s" % (term, username, token)
     r = requests.get(url)
     response_dict = r.json()
-    with open("response_log.txt", "ab") as f:
-        f.write("notebook search response :" + str(r) + "\n")
-        f.write("response json: " + str(response_dict) + "\n")
-        f.close()
+    # with open("response_log.txt", "ab") as f:
+    #     f.write("notebook search response :" + str(r) + "\n")
+    #     f.write("response json: " + str(response_dict) + "\n")
+    #     f.close()
     try:
         return response_dict["notebooks"][0]
     except IndexError:
@@ -169,10 +169,10 @@ def experiment_add(username, token, metadata, base_url, nb_id):
     headers = {'Content-type': 'application/json'}
     r = requests.put(url, data, headers=headers)
     response_dict = r.json()
-    with open("response_log.txt", "ab") as f:
-        f.write("experiment add response :" + str(r) + "\n")
-        f.write("response json: " + str(response_dict) + "\n")
-        f.close()
+    # with open("response_log.txt", "ab") as f:
+    #     f.write("experiment add response :" + str(r) + "\n")
+    #     f.write("response json: " + str(response_dict) + "\n")
+    #     f.close()
 
     return response_dict
 
@@ -191,10 +191,10 @@ def job_fetch(username, wid, base_url, login): # something fucks up here
     url = base_url + "api/v1/jobs/%d/?username=%s&token=%s" % (wid, username, token)
     r = requests.get(url)
     response_dict = r.json()
-    with open("response_log.txt", "ab") as f:
-        f.write("job fetch response :" + str(r) + "\n")
-        f.write("response json: " + str(response_dict) + "\n")
-        f.close()
+    # with open("response_log.txt", "ab") as f:
+    #     f.write("job fetch response :" + str(r) + "\n")
+    #     f.write("response json: " + str(response_dict) + "\n")
+    #     f.close()
     return response_dict
 
 
@@ -220,11 +220,9 @@ def check_status(username, wid, wait, base_url, login): # something fucks up her
 
     running = True
     while running:
-        try:
-            time.sleep(5)
-            status = job_fetch(username, wid, base_url, login)["status"]
-        except KeyError:
-            continue
+        time.sleep(5)
+        status = job_fetch(username, wid, base_url, login)["status"]
+
         time.sleep(wait)
         if status == "Completed":
             return status
@@ -335,7 +333,16 @@ def run_all():
         wid = experiment_add(username, token, metadata, base_url, nb_id)['id']
 
         print "Work ID: " + str(wid)
-        status = check_status(username,wid, wait, base_url, login)
+
+        try:
+            status = check_status(username,wid, wait, base_url, login)
+        except KeyError:
+            with open("response_log.txt", "ab") as f:
+                f.write("Refersh Token Dict: " + str(refresh_dict) + "\n\n")
+                f.write("Status: " + status + "\n\n")
+                f.write("Job Fetch data: " + json.dumps(job_fetch(username, wid, base_url, login)))
+                f.close()
+
         comp_dict = json.dumps(job_fetch(username, wid, base_url, login))
 
         print str(wid) + " " + status
