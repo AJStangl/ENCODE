@@ -213,7 +213,7 @@ def check_status(username, wid, wait, base_url, login): # something fucks up her
     while running:
         try:
             print "Checking Status"
-            wait(5)
+            time.sleep(5)
             status = job_fetch(username, wid, base_url, login)["status"]
             print status
         except KeyError:
