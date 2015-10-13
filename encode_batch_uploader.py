@@ -96,7 +96,7 @@ def additional_metadata(metadata):
     return add_dict
 
 
-def notebook_add(add_meta, username,token, base_url):
+def notebook_add(add_meta, username, token, base_url):
     '''
 
     :param add_meta:Additional Meta Hash from for giving the proper id and name to note books
@@ -212,8 +212,10 @@ def check_status(username, wid, wait, base_url, login): # something fucks up her
     running = True
     while running:
         try:
+            print "Checking Status"
             wait(5)
             status = job_fetch(username, wid, base_url, login)["status"]
+            print status
         except KeyError:
             continue
         time.sleep(wait)
@@ -226,7 +228,7 @@ def check_status(username, wid, wait, base_url, login): # something fucks up her
             return status
 
 
-def write_log(exp_name, wid, status, comp_dict, elapsed, term, add_meta):
+def write_log(exp_name, wid, status, comp_dict, elapsed, term): # add_meta["File Size"] in the future
     if status == "Completed":
         cdat = []
         comp_dict = json.dumps(comp_dict)
@@ -248,7 +250,7 @@ def write_log(exp_name, wid, status, comp_dict, elapsed, term, add_meta):
             comp_log = csv.writer(f, lineterminator="\n", delimiter='\t')
             for elem in fdat:
                 comp_log.writerow(elem)
-            f.close()
+            f.close()# addda#
 
 
 def next_job(i, status):
