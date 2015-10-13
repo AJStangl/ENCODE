@@ -337,11 +337,13 @@ def run_all():
         try:
             status = check_status(username,wid, wait, base_url, login)
         except KeyError:
+            status = check_status(username,wid, wait, base_url, login)
             with open("response_log.txt", "ab") as f:
                 f.write("Refersh Token Dict: " + str(refresh_dict) + "\n\n")
                 f.write("Status: " + status + "\n\n")
                 f.write("Job Fetch data: " + json.dumps(job_fetch(username, wid, base_url, login)))
                 f.close()
+                continue
 
         comp_dict = json.dumps(job_fetch(username, wid, base_url, login))
 
