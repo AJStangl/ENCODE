@@ -223,7 +223,6 @@ def check_status(username, wid, wait, base_url, login): # something fucks up her
         try:
             time.sleep(5)
             status = job_fetch(username, wid, base_url, login)["status"]
-            print status
         except KeyError:
             continue
         time.sleep(wait)
