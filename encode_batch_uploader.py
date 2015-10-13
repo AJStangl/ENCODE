@@ -22,7 +22,10 @@ def get_token(username, password, key, secret):
     payload = {'grant_type':"client_credentials",'username': username, 'password': password, 'scope': 'PRODUCTION'}
     auth = (key, secret)
     r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
+    print "token response"
+    print r
     r = r.json()
+    print r
     return r
 
 
@@ -30,7 +33,10 @@ def refresh_token(r_token, key, secret):
     payload = {'grant_type': 'refresh_token', 'refresh_token': r_token}
     auth = (key, secret)
     r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
+    print "refresh token response"
+    print r
     r = r.json()
+    print r
     return r
 
 
@@ -110,7 +116,10 @@ def notebook_add(add_meta, username,token, base_url):
 
     pay = json.dumps(vars(Notebook(nb_name, desc, tp)))
     r = requests.put(url, pay, headers=headers)
+    print "notebook add response"
+    print r
     resp_dict = r.json()
+    print resp_dict
     return resp_dict
 
 
@@ -122,7 +131,10 @@ def notebook_search(term, base_url, username, token):
     """
     url = base_url + "api/v1/notebooks/search/%s/?username=%s&token=%s" % (term, username, token)
     r = requests.get(url)
+    print "notebook search response"
+    print r
     resp_dict = r.json()
+    print resp_dict
     try:
         return resp_dict["notebooks"][0]
     except IndexError:
@@ -150,7 +162,10 @@ def experiment_add(username, token, metadata, base_url, nb_id):
     url = base_url + "api/v1/experiments?username=%s&token=%s" % (username, token)
     headers = {'Content-type': 'application/json'}
     r = requests.put(url, data, headers=headers)
+    print "exp_add response"
+    print r
     rep_dict = r.json()
+    print rep_dict
     return rep_dict
 
 
@@ -167,7 +182,10 @@ def job_fetch(username, wid, base_url, login):
     token = refresh_dict['access_token']
     url = base_url + "api/v1/jobs/%d/?username=%s&token=%s" % (wid, username, token)
     r = requests.get(url)
+    print "job fetch response"
+    print r
     comp_dict = r.json()
+    print comp_dict
     return comp_dict
 
 
@@ -196,7 +214,6 @@ def check_status(username, wid, wait, base_url, login):
         try:
             status = job_fetch(username, wid, base_url, login)["status"]
         except KeyError:
-            print "Error in status get - Re-trying"
             continue
         time.sleep(wait)
         if status == "Completed":

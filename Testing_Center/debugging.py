@@ -28,33 +28,34 @@ def refresh_token(r_token, key, secret, username, password):
     payload = {'grant_type': 'refresh_token', 'refresh_token':r_token}
     auth = (key, secret)
     r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
+    print r
     r = r.json()
     return r
 
-# base_url = "https://geco.iplantcollaborative.org/coge/"
-# login = user_data('login.json')
-# user = user_data('login.json')
-# username = user["username"]
-# password = user["password"]
-# secret = user["secret"]
-# key = user["key"]
-# wid = 31333
-# status = job_fetch(username, wid, base_url, login)
-# print status
+base_url = "https://geco.iplantcollaborative.org/coge/"
+login = user_data('login.json')
+user = user_data('login.json')
+username = user["username"]
+password = user["password"]
+secret = user["secret"]
+key = user["key"]
+wid = 31333
+status = job_fetch(username, wid, base_url, login)
+print status
 
 
-# while True:
-#     token_dict = get_token(username,password,key,secret)
-#     print token_dict
-#     token = token_dict['access_token']
-#     r_token = token_dict['refresh_token']
-#     print token
-#     r_dict = refresh_token(r_token,key,secret,username,password)
-#     print r_dict
-#     print r_dict['access_token']
+while True:
+    token_dict = get_token(username,password,key,secret)
+    print token_dict
+    token = token_dict['access_token']
+    r_token = token_dict['refresh_token']
+    print token
+    r_dict = refresh_token(r_token,key,secret,username,password)
+    print r_dict
+    print r_dict['access_token']
 
-sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\json'
-json_file_list = file_list(sub_dir)
+# sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\json'
+# json_file_list = file_list(sub_dir)
 # max_files = len(json_file_list)
 #
 # i = 0
