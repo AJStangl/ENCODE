@@ -169,7 +169,7 @@ def experiment_add(username, token, metadata, base_url, nb_id):
     return rep_dict
 
 
-def job_fetch(username, wid, base_url, login):
+def job_fetch(username, wid, base_url, login): # something fucks up here
     '''
     :param username: the username for auth
     :param token: The token provided from get_token()
@@ -199,7 +199,7 @@ def experiment_search(username, token, exp_name, base_url):
         return False
 
 
-def check_status(username, wid, wait, base_url, login):
+def check_status(username, wid, wait, base_url, login): # something fucks up here 
     '''
 
     :param username:Your iPlant Username
@@ -212,6 +212,7 @@ def check_status(username, wid, wait, base_url, login):
     running = True
     while running:
         try:
+            wait(5)
             status = job_fetch(username, wid, base_url, login)["status"]
         except KeyError:
             continue
