@@ -190,11 +190,12 @@ def job_fetch(username, wid, base_url, login): # something fucks up here
     token = refresh_dict['access_token']
     url = base_url + "api/v1/jobs/%d/?username=%s&token=%s" % (wid, username, token)
     r = requests.get(url)
-    print "job fetch response"
-    print r
-    comp_dict = r.json()
-    print comp_dict
-    return comp_dict
+    response_dict = r.json()
+    with open("response_log.txt", "ab") as f:
+        f.write("job fetch response :" + str(r) + "\n")
+        f.write("response json: " + str(response_dict) + "\n")
+        f.close()
+    return response_dict
 
 
 def experiment_search(username, token, exp_name, base_url):
