@@ -322,9 +322,10 @@ def run_all():
             token = refresh_dict['access_token']
         except KeyError:
             print "Error in Token - Retrying"
-            time.sleep(300)
+            time.sleep(10)
             continue
         metadata = open_metadata_file(i, sub_dir, json_file_list)
+        file_remove(sub_dir,i,json_file_list)
         pri_meta = primary_metadata(metadata)
         add_meta = additional_metadata(metadata)
         term = add_meta["Encode Biosample ID"]
