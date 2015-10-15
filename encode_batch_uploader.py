@@ -14,6 +14,7 @@ def user_data(mfile):
         info.close()
     return login
 
+
 def log_request(r):
     '''
 
@@ -21,7 +22,7 @@ def log_request(r):
     :return: none
     '''
     with open('log_requst.txt', 'ab') as f:
-        f.write(' request: ' + str(r.request) + '\n')
+        f.write('request: ' + str(r.request) + '\n')
         f.write('headers: '+ str(r.headers) + '\n')
         f.write('status code: ' + str(r.status_code) + '\n')
         f.write('histroy: ' + str(r.history) + '\n')
@@ -35,6 +36,15 @@ def log_request(r):
         f.close()
 
 
+def remove_file(i, sub_dir, json_file_list):
+    """
+
+    :param i:
+    :param sub_dir:
+    :param json_file_list:
+    :return:
+    """
+    os.remove(sub_dir + "/" + json_file_list[i])
 
 
 def get_token(username, password, key, secret):
@@ -49,7 +59,6 @@ def get_token(username, password, key, secret):
     return response_dict
 
 
-
 def refresh_token(r_token, key, secret):
     payload = {'grant_type': 'refresh_token', 'refresh_token': r_token}
     auth = (key, secret)
@@ -57,7 +66,6 @@ def refresh_token(r_token, key, secret):
     log_request(r)
     response_dict = r.json()
     return response_dict
-
 
 
 def file_list(sub_dir):
@@ -336,8 +344,9 @@ def run_all():
         print "Work ID: " + str(wid)
 
         try:
-            status = check_status(username,wid, wait, base_url, login)
+            status = check_status(username, wid, wait, base_url, login)
         except KeyError:
+            print "Error at Status Check"
             time.sleep(5)
             status = check_status(username,wid, wait, base_url, login)
 
@@ -348,7 +357,6 @@ def run_all():
         if status == "Completed":
             elapsed = timeit.default_timer() - start_time
             write_log(exp_name, wid, status, comp_dict, elapsed, term)
-            os.remove(sub_dir + "/" + json_file_list[i])
         i = next_job(i, status)
 
 
