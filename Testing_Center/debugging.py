@@ -14,7 +14,7 @@ def user_data(mfile):
         info.close()
     return login
 
-def get_token(username, password, key, secret):
+def bla_token(username, password, key, secret):
     '''
     This Function Retrieves the access token needed to upload data
     '''
@@ -22,22 +22,28 @@ def get_token(username, password, key, secret):
     auth = (key, secret)
     r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
     r = r.json()
-    print r
     refresh = r['refresh_token']
     payload = {'grant_type': 'refresh_token', 'refresh_token': refresh}
     auth = (key, secret)
     r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
-    print r
+    with open ('test.txt') as f:
+    f.write('request: ' + str(r.request) + '\n')
+    print 'headers: '+ str(r.headers)
+    print 'status code: ' + str(r.status_code)
+    print 'histroy: ' + str(r.history)
+    print 'Url: ' + str(r.url)
+    print 'Reason: ' + str(r.reason)
+    print '_content: ' + str(r._content)
+    print 'elapsed: ' + str(r.elapsed)
     r = r.json()
-    print r
+    print 'json: ' + str(r)
     return r
-def refresh_token(r_token, key, secret, username, password):
-    payload = {'grant_type': 'refresh_token', 'refresh_token':r_token}
-    auth = (key, secret)
-    r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
-    print r
-    r = r.json()
-    return r
+# def refresh_token(r_token, key, secret, username, password):
+#     payload = {'grant_type': 'refresh_token', 'refresh_token':r_token}
+#     auth = (key, secret)
+#     r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
+#     r = r.json()
+#     return r
 
 
 wid = 31333
@@ -51,5 +57,7 @@ password = user["password"]
 secret = user["secret"]
 key = user["key"]
 
-get_token(username,password,key,secret)
+key = bla_token(username,password,key,secret)
+
+
 

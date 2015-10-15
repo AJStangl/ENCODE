@@ -14,6 +14,28 @@ def user_data(mfile):
         info.close()
     return login
 
+def log_request(r):
+    '''
+
+    :param r: response
+    :return: none
+    '''
+    with open('log_requst.txt', 'ab') as f:
+        f.write(' request: ' + str(r.request) + '\n')
+        f.write('headers: '+ str(r.headers) + '\n')
+        f.write('status code: ' + str(r.status_code) + '\n')
+        f.write('histroy: ' + str(r.history) + '\n')
+        f.write('Url: ' + str(r.url) + '\n')
+        f.write('Reason: ' + str(r.reason) + '\n')
+        f.write('_content: ' + str(r._content) + '\n')
+        f.write('elapsed: ' + str(r.elapsed) + '\n')
+        r = r.json()
+        f.write('json: ' + str(r) + '\n')
+        f.write('\n\n')
+        f.close()
+
+
+
 
 def get_token(username, password, key, secret):
     '''
@@ -22,11 +44,8 @@ def get_token(username, password, key, secret):
     payload = {'grant_type':"client_credentials",'username': username, 'password': password, 'scope': 'PRODUCTION'}
     auth = (key, secret)
     r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
+    log_request(r)
     response_dict = r.json()
-    # with open("response_log.txt", "ab") as f:
-    #     f.write("token Response: " + str(r) + "\n")
-    #     f.write("response json: " + str(response_dict) + "\n")
-    #     f.close()
     return response_dict
 
 
@@ -35,11 +54,8 @@ def refresh_token(r_token, key, secret):
     payload = {'grant_type': 'refresh_token', 'refresh_token': r_token}
     auth = (key, secret)
     r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
+    log_request(r)
     response_dict = r.json()
-    # with open("response_log.txt", "ab") as f:
-    #     f.write("refresh token response: " + str(r) + "\n")
-    #     f.write("response json: " + str(response_dict) + "\n")
-    #     f.close()
     return response_dict
 
 
@@ -119,12 +135,8 @@ def notebook_add(add_meta, username, token, base_url):
 
     pay = json.dumps(vars(Notebook(nb_name, desc, tp)))
     r = requests.put(url, pay, headers=headers)
+    log_request(r)
     response_dict = r.json()
-    #
-    # with open("response_log.txt", "ab") as f:
-    #     f.write("notebook add response :" + str(r) + "\n")
-    #     f.write("response json: " + str(response_dict) + "\n")
-    #     f.close()
     return response_dict
 
 
@@ -137,10 +149,6 @@ def notebook_search(term, base_url, username, token):
     url = base_url + "api/v1/notebooks/search/%s/?username=%s&token=%s" % (term, username, token)
     r = requests.get(url)
     response_dict = r.json()
-    # with open("response_log.txt", "ab") as f:
-    #     f.write("notebook search response :" + str(r) + "\n")
-    #     f.write("response json: " + str(response_dict) + "\n")
-    #     f.close()
     try:
         return response_dict["notebooks"][0]
     except IndexError:
@@ -168,16 +176,12 @@ def experiment_add(username, token, metadata, base_url, nb_id):
     url = base_url + "api/v1/experiments?username=%s&token=%s" % (username, token)
     headers = {'Content-type': 'application/json'}
     r = requests.put(url, data, headers=headers)
+    log_request(r)
     response_dict = r.json()
-    # with open("response_log.txt", "ab") as f:
-    #     f.write("experiment add response :" + str(r) + "\n")
-    #     f.write("response json: " + str(response_dict) + "\n")
-    #     f.close()
-
     return response_dict
 
 
-def job_fetch(username, wid, base_url, login): # something fucks up here
+def job_fetch(username, wid, base_url, login):
     '''
     :param username: the username for auth
     :param token: The token provided from get_token()
@@ -191,16 +195,13 @@ def job_fetch(username, wid, base_url, login): # something fucks up here
     url = base_url + "api/v1/jobs/%d/?username=%s&token=%s" % (wid, username, token)
     r = requests.get(url)
     response_dict = r.json()
-    # with open("response_log.txt", "ab") as f:
-    #     f.write("job fetch response :" + str(r) + "\n")
-    #     f.write("response json: " + str(response_dict) + "\n")
-    #     f.close()
     return response_dict
 
 
 def experiment_search(username, token, exp_name, base_url):
     url = base_url + "api/v1/experiments/search/%s/?username=%s&token=%s" % (exp_name, username, token)
     r = requests.get(url)
+    log_request(r)
     resp_dict = r.json()
     try:
         return resp_dict["experiments"][0]
@@ -208,7 +209,7 @@ def experiment_search(username, token, exp_name, base_url):
         return False
 
 
-def check_status(username, wid, wait, base_url, login): # something fucks up here 
+def check_status(username, wid, wait, base_url, login):
     '''
 
     :param username:Your iPlant Username
@@ -222,7 +223,6 @@ def check_status(username, wid, wait, base_url, login): # something fucks up her
     while running:
         time.sleep(5)
         status = job_fetch(username, wid, base_url, login)["status"]
-
         time.sleep(wait)
         if status == "Completed":
             return status
@@ -255,7 +255,7 @@ def write_log(exp_name, wid, status, comp_dict, elapsed, term): # add_meta["File
             comp_log = csv.writer(f, lineterminator="\n", delimiter='\t')
             for elem in fdat:
                 comp_log.writerow(elem)
-            f.close()# addda#
+            f.close()
 
 
 def next_job(i, status):
@@ -314,6 +314,7 @@ def run_all():
             token = refresh_dict['access_token']
         except KeyError:
             print "Error in Token - Retrying"
+            time.sleep(300)
             continue
         metadata = open_metadata_file(i, sub_dir, json_file_list)
         pri_meta = primary_metadata(metadata)
@@ -337,13 +338,8 @@ def run_all():
         try:
             status = check_status(username,wid, wait, base_url, login)
         except KeyError:
+            time.sleep(5)
             status = check_status(username,wid, wait, base_url, login)
-            with open("response_log.txt", "ab") as f:
-                f.write("Refersh Token Dict: " + str(refresh_dict) + "\n\n")
-                f.write("Status: " + status + "\n\n")
-                f.write("Job Fetch data: " + json.dumps(job_fetch(username, wid, base_url, login)))
-                f.close()
-                continue
 
         comp_dict = json.dumps(job_fetch(username, wid, base_url, login))
 
