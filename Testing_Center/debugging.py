@@ -1,9 +1,12 @@
 # __author__ = 'AJ'
 import json, requests, os, sys
-from encode_batch_uploader import file_list, check_status, job_fetch, additional_metadata, open_metadata_file
+from threading import Thread
+import threading
+import Queue
+from encode_batch_uploader import file_list, check_status, job_fetch, additional_metadata, open_metadata_file, time
 def user_data(mfile):
-    '''
 
+    '''
     This function will return the user data for login
     :param file: TSV file with login information
     :return: Dict of Login Information
@@ -14,58 +17,52 @@ def user_data(mfile):
         info.close()
     return login
 
-def bla_token(username, password, key, secret):
-    '''
-    This Function Retrieves the access token needed to upload data
-    '''
-    payload = {'grant_type':"client_credentials",'username': username, 'password': password, 'scope': 'PRODUCTION'}
-    auth = (key, secret)
-    r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
-    r = r.json()
-    refresh = r['refresh_token']
-    payload = {'grant_type': 'refresh_token', 'refresh_token': refresh}
-    auth = (key, secret)
-    r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
-    r = r.json()
-    return r
-def r_token(r_token, key, secret, username, password):
-    payload = {'grant_type': 'refresh_token', 'refresh_token':r_token}
-    auth = (key, secret)
-    r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
-    r = r.json()
-    return r
-
-
-# wid = 31333
-# status = job_fetch(username, wid, base_url, login)
-
-base_url = "https://geco.iplantcollaborative.org/coge/"
-login = user_data('login.json')
-user = user_data('login.json')
-username = user["username"]
-password = user["password"]
-secret = user["secret"]
-key = user["key"]
 
 
 
-def test(username, password, key, secret):
-    payload = {'grant_type': "client_credentials", 'username': username, 'password': password, 'scope': 'PRODUCTION'}
-    auth = (key, secret)
-    r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
-    if r.status_code != 200:
-        # What do I do?
+def test(username, password, key, secret, thread):
+    while True:
+        payload = {'grant_type': "client_credentials", 'username': username, 'password': password, 'scope': 'PRODUCTION'}
+        auth = (key, secret)
+        r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
+        if r.status_code != 200:
+            print thread + " Problem With obtaining Token - Sleep and Continue"
+            time.sleep(10)
+            continue
         r = r.json()
-        print r
         refresh = r["refresh_token"]
         payload = {'grant_type': 'refresh_token', 'refresh_token': refresh}
         r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
+        if r.status_code != 200:
+            print thread + " Problem With Refreshing Token - Sleep and Continue"
+            time.sleep(10)
+            continue
         r = r.json()
-        print r
+        print thread + " " + test.__name__
         return r['access_token']
 
+def runall():
+    thread = threading.current_thread().name
+    print thread + " " + runall.__name__
+    base_url = "https://geco.iplantcollaborative.org/coge/"
+    login = user_data('login.json')
+    user = user_data('login.json')
+    username = user["username"]
+    password = user["password"]
+    secret = user["secret"]
+    key = user["key"]
+    test(username, password, key, secret, thread)
 
-while True:
-    print test(username, password, key , secret)
 
 
+if __name__ == '__main__':
+
+    p1 = Thread(target=runall)
+    p2 = Thread(target=runall)
+    p3 = Thread(target=runall)
+    p4 = Thread(target=runall)
+
+    p1.start()
+    p2.start()
+    p3.start()
+    p4.start()
