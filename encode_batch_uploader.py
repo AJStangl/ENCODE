@@ -344,7 +344,7 @@ def run_all(min, max):
 
         else:
             nb_id = notebook_search(term, base_url, username, token, thread)["id"]
-            print thread + " " + nb_id
+            print thread + " " + str(nb_id)
 
         exp_name = pri_meta["name"]
 
