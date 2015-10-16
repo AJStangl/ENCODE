@@ -324,6 +324,7 @@ def run_all():
             print "Error in Token - Retrying"
             time.sleep(10)
             continue
+
         metadata = open_metadata_file(i, sub_dir, json_file_list)
         file_remove(sub_dir,i,json_file_list)
         pri_meta = primary_metadata(metadata)
@@ -333,6 +334,7 @@ def run_all():
         if nb_check == False:
             nb_id = notebook_add(add_meta, username, token, base_url)["id"]
             print "Notebook ID: " + str(nb_id)
+
         else:
             nb_id = notebook_search(term, base_url, username, token)["id"]
             print nb_id
