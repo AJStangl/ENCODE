@@ -61,7 +61,7 @@ def get_token(username, password, key, secret, thread):
         r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
         if r.status_code != 200:
             print thread + " Problem With obtaining Token - Sleep and Continue " + thread
-            time.sleep(10)
+            time.sleep(15)
             continue
         r = r.json()
         refresh = r["refresh_token"]
@@ -69,7 +69,7 @@ def get_token(username, password, key, secret, thread):
         r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
         if r.status_code != 200:
             print thread + " Problem With Refreshing Token - Sleep and Continue"
-            time.sleep(10)
+            time.sleep(15)
             continue
         log_request(thread, r, func_name)
         r = r.json()
@@ -236,16 +236,21 @@ def check_status(wid, wait, base_url, username, password, key, secret, thread):
 
     running = True
     while running:
-        status = job_fetch(username, wid, base_url, password, key, secret, thread)["status"]
-        time.sleep(wait)
-        if status == "Completed":
-            return status
-        elif status == "Running":
+        try:
+            status = job_fetch(username, wid, base_url, password, key, secret, thread)
+            time.sleep(5)
+            status = status['status']
+            time.sleep(wait)
+            if status == "Completed":
+                return status
+            elif status == "Running":
+                continue
+            else:
+                print thread + " " + status
+                return status
+        except KeyError:
+            print thread + " Error in KeyStatus " + check_status.__name__ + " Continuing"
             continue
-        else:
-            print thread + " "  + status
-            return status
-
 
 def write_log(exp_name, wid, status, comp_dict, elapsed, term, thread): # add_meta["File Size"] in the future
     if status == "Completed":
@@ -353,8 +358,10 @@ def run_all(min, max):
         token = get_token(username, password, key, secret, thread)
         wid = experiment_add(username, token, metadata, base_url, nb_id, thread)['id']
 
-        print thread + " Work ID: " + str(wid)
+        print thread + " Work ID: " + str(wid) + " submitted"
         file_remove(sub_dir, i, json_file_list)
+        print "Removing " + json_file_list[i] + "from files"
+
         status = check_status(wid, wait, base_url, username, password, key, secret, thread)
 
         comp_dict = json.dumps(job_fetch(username, wid, base_url, password, key, secret, thread))
@@ -385,7 +392,10 @@ if __name__ == '__main__':
     p4 = Thread(target=run_all, args=(min(w4), max(w4)))
 
     p1.start()
+    time.sleep(15)
     p2.start()
+    time.sleep(15)
     p3.start()
+    time.sleep(15)
     p4.start()
 
