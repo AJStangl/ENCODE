@@ -326,8 +326,8 @@ def run_all(min, max):
     json_file_list = file_list(sub_dir)
     # total_files = max_file_length(json_file_list)
     wait = 60
-    i = 0
 
+    # i = 0
     # while i < total_files:
     for i in range(min, max + 1):
         token = get_token(username, password, key, secret, thread)
@@ -356,7 +356,6 @@ def run_all(min, max):
         print thread + " Work ID: " + str(wid)
         file_remove(sub_dir, i, json_file_list)
         status = check_status(wid, wait, base_url, username, password, key, secret, thread)
-        print thread + " Error at Status Check"
 
         comp_dict = json.dumps(job_fetch(username, wid, base_url, password, key, secret, thread))
 
@@ -365,7 +364,7 @@ def run_all(min, max):
         if status == "Completed":
             elapsed = timeit.default_timer() - start_time
             write_log(exp_name, wid, status, comp_dict, elapsed, term, thread)
-        i = next_job(i, status)
+        # i = next_job(i, status)
 
 
 
