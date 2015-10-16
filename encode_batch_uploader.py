@@ -60,7 +60,7 @@ def get_token(username, password, key, secret, thread):
         auth = (key, secret)
         r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
         if r.status_code != 200:
-            print "Problem With obtaining Token - Sleep and Continue " + thread
+            print thread + " Problem With obtaining Token - Sleep and Continue " + thread
             time.sleep(10)
             continue
         r = r.json()
@@ -68,10 +68,10 @@ def get_token(username, password, key, secret, thread):
         payload = {'grant_type': 'refresh_token', 'refresh_token': refresh}
         r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
         if r.status_code != 200:
-            print "Problem With Refreshing Token - Sleep and Continue"
+            print thread + " Problem With Refreshing Token - Sleep and Continue"
             time.sleep(10)
             continue
-        log_request(r, func_name)
+        log_request(thread, r, func_name)
         r = r.json()
         return r['access_token']
 
