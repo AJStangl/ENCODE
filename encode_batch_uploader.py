@@ -238,7 +238,7 @@ def check_status(wid, wait, base_url, username, password, key, secret, thread):
     while running:
         try:
             status = job_fetch(username, wid, base_url, password, key, secret, thread)
-            time.sleep(5)
+            time.sleep(wait)
             status = status['status']
             time.sleep(wait)
             if status == "Completed":
@@ -330,7 +330,7 @@ def run_all(min, max):
     # sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
     json_file_list = file_list(sub_dir)
     # total_files = max_file_length(json_file_list)
-    wait = 60
+    wait = 120
 
     # i = 0
     # while i < total_files:
