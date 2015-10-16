@@ -360,13 +360,13 @@ def run_all(min, max):
         print thread + " Work ID: " + str(wid) + " submitted"
 
 
-        print "Removing " + json_file_list[i] + "from files"
+        print thread + "Removing " + json_file_list[i] + "from files"
 
         status = check_status(wid, wait, base_url, username, password, key, secret, thread)
 
         comp_dict = json.dumps(job_fetch(username, wid, base_url, password, key, secret, thread))
 
-        print str(wid) + " " + status
+        print thread + str(wid) + " " + status
 
         if status == "Completed":
             elapsed = timeit.default_timer() - start_time
