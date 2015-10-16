@@ -24,7 +24,7 @@ def log_request(thread, r, func_name):
     :return: none
     '''
     with open(thread + '_log_requst.txt', 'ab') as f:
-        f.write('Function: ' + func_name)
+        f.write('Function: ' + func_name + '\n')
         f.write('request: ' + str(r.request) + '\n')
         f.write('headers: '+ str(r.headers) + '\n')
         f.write('status code: ' + str(r.status_code) + '\n')
@@ -61,7 +61,7 @@ def get_token(username, password, key, secret, thread):
         r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
         if r.status_code != 200:
             print thread + " Problem With obtaining Token - Sleep and Continue " + thread
-            time.sleep(15)
+            time.sleep(30)
             continue
         r = r.json()
         refresh = r["refresh_token"]
@@ -69,7 +69,7 @@ def get_token(username, password, key, secret, thread):
         r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
         if r.status_code != 200:
             print thread + " Problem With Refreshing Token - Sleep and Continue"
-            time.sleep(15)
+            time.sleep(30)
             continue
         log_request(thread, r, func_name)
         r = r.json()
