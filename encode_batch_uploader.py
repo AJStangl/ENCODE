@@ -357,9 +357,9 @@ def run_all(min, max):
         print thread + " Obtaining New token"
         token = get_token(username, password, key, secret, thread)
         wid = experiment_add(username, token, metadata, base_url, nb_id, thread)['id']
-
         print thread + " Work ID: " + str(wid) + " submitted"
-        file_remove(sub_dir, i, json_file_list)
+
+
         print "Removing " + json_file_list[i] + "from files"
 
         status = check_status(wid, wait, base_url, username, password, key, secret, thread)
@@ -371,6 +371,7 @@ def run_all(min, max):
         if status == "Completed":
             elapsed = timeit.default_timer() - start_time
             write_log(exp_name, wid, status, comp_dict, elapsed, term, thread)
+            file_remove(sub_dir, i, json_file_list)
         # i = next_job(i, status)
 
 
