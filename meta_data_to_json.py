@@ -18,7 +18,7 @@ class JsonObject:
     def add_data(self):
 
 
-        with open("test_meta.tsv", "r") as infile:
+        with open("encode_test.tsv", "r") as infile:
             headings = next(infile)
             reader = csv.reader(infile, delimiter='\t')
             i = 0

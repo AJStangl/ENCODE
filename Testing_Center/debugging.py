@@ -54,15 +54,16 @@ def runall():
     test(username, password, key, secret, thread)
 
 
-
+def x():
+    print "do i print?"
 if __name__ == '__main__':
-
-    p1 = Thread(target=runall)
-    p2 = Thread(target=runall)
-    p3 = Thread(target=runall)
-    p4 = Thread(target=runall)
-
-    p1.start()
-    p2.start()
-    p3.start()
-    p4.start()
+    #
+    # p1 = Thread(target=runall)
+    # p2 = Thread(target=runall)
+    # p3 = Thread(target=runall)
+    # p4 = Thread(target=runall)
+    #
+    # p1.start()
+    # p2.start()
+    # p3.start()
+    # p4.start()

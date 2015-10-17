@@ -60,7 +60,7 @@ def get_token(username, password, key, secret, thread):
         auth = (key, secret)
         r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
         if r.status_code != 200:
-            print thread + " Problem With obtaining Token - Sleep and Continue " + thread
+            print thread + " Problem With obtaining Token - Sleep and Continue "
             time.sleep(30)
             continue
         r = r.json()
@@ -73,6 +73,7 @@ def get_token(username, password, key, secret, thread):
             continue
         log_request(thread, r, func_name)
         r = r.json()
+        print thread + " Obtained Token " + r['access_token']
         return r['access_token']
 
 
@@ -237,11 +238,13 @@ def check_status(wid, wait, base_url, username, password, key, secret, thread):
     running = True
     while running:
         try:
+            time.sleep(wait)
             status = job_fetch(username, wid, base_url, password, key, secret, thread)
             time.sleep(wait)
             status = status['status']
             time.sleep(wait)
             if status == "Completed":
+                print thread + " " + status
                 return status
             elif status == "Running":
                 continue
@@ -249,14 +252,17 @@ def check_status(wid, wait, base_url, username, password, key, secret, thread):
                 print thread + " " + status
                 return status
         except KeyError:
+            print thread + " job response json: " + str(job_fetch(username, wid, base_url, password, key, secret, thread))
             print thread + " Error in KeyStatus " + check_status.__name__ + " Continuing"
             continue
 
-def write_log(exp_name, wid, status, comp_dict, elapsed, term, thread): # add_meta["File Size"] in the future
+
+def write_log(exp_name, wid, status, comp_dict, elapsed, term, thread,add_meta ): # add_meta["File Size"] in the future
     if status == "Completed":
         cdat = []
         comp_dict = json.dumps(comp_dict)
-        cl = [exp_name, wid, status, comp_dict, elapsed]
+        fsize = add_meta["File Size"]
+        cl = [exp_name, wid, status, comp_dict, fsize, elapsed]
         cdat.append(cl)
 
         with open("logs/" + "Completed_Log_" + term + "_" + thread + ".tsv" , "ab") as f:
@@ -268,7 +274,8 @@ def write_log(exp_name, wid, status, comp_dict, elapsed, term, thread): # add_me
     else:
         fdat = []
         comp_dict = json.dumps(comp_dict)
-        fl = [exp_name, wid, status, comp_dict, elapsed]
+        fsize = add_meta["File Size"]
+        fl = [exp_name, wid, status, comp_dict, fsize, elapsed]
         fdat.append(fl)
         with open("logs/" + "Failed_Log_" + term + "_" + thread + ".tsv", "ab") as f:
             comp_log = csv.writer(f, lineterminator="\n", delimiter='\t')
@@ -315,6 +322,7 @@ def file_remove(sub_dir, i, json_file_list):
 
 
 def run_all(min, max):
+
     thread = threading.current_thread().name
     start_time = timeit.default_timer()
     # Obtain user information
@@ -329,11 +337,9 @@ def run_all(min, max):
     sub_dir = '/home/ajstangl/encode/jsons'
     # sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
     json_file_list = file_list(sub_dir)
-    # total_files = max_file_length(json_file_list)
+    files = file_list(sub_dir)
     wait = 120
 
-    # i = 0
-    # while i < total_files:
     for i in range(min, max + 1):
         token = get_token(username, password, key, secret, thread)
         metadata = open_metadata_file(i, sub_dir, json_file_list)
@@ -345,22 +351,26 @@ def run_all(min, max):
 
         if nb_check == False:
             nb_id = notebook_add(thread, add_meta, username, token, base_url)["id"]
-            print thread + " Notebook ID: " + str(nb_id)
+            print thread + " Adding Notebook ID: " + str(nb_id)
 
         else:
             nb_id = notebook_search(term, base_url, username, token, thread)["id"]
-            print thread + " " + str(nb_id)
+            print thread + " Found Notebook ID" + str(nb_id)
 
         exp_name = pri_meta["name"]
 
         print thread + " Experiment Name: " + exp_name
+
         print thread + " Obtaining New token"
+
         token = get_token(username, password, key, secret, thread)
+
         wid = experiment_add(username, token, metadata, base_url, nb_id, thread)['id']
+
         print thread + " Work ID: " + str(wid) + " submitted"
 
-
-        print thread + "Removing " + json_file_list[i] + "from files"
+        print thread + " Removing " + json_file_list[i] + " from files"
+        remove_file(i, sub_dir, json_file_list)
 
         status = check_status(wid, wait, base_url, username, password, key, secret, thread)
 
@@ -370,15 +380,15 @@ def run_all(min, max):
 
         if status == "Completed":
             elapsed = timeit.default_timer() - start_time
-            write_log(exp_name, wid, status, comp_dict, elapsed, term, thread)
-            file_remove(sub_dir, i, json_file_list)
-        # i = next_job(i, status)
+            write_log(exp_name, wid, status, comp_dict, elapsed, term, thread, add_meta)
+
+
 
 
 
 if __name__ == '__main__':
-    # sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
-    sub_dir = '/home/ajstangl/encode/jsons'  # for geco
+    sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
+    # sub_dir = '/home/ajstangl/encode/jsons'  # for geco
     json_files = file_list(sub_dir)
     total_files = max_file_length(json_files)
     temp = split_jobs(range(total_files), 4)
@@ -393,10 +403,10 @@ if __name__ == '__main__':
     p4 = Thread(target=run_all, args=(min(w4), max(w4)))
 
     p1.start()
-    time.sleep(15)
+    time.sleep(20)
     p2.start()
-    time.sleep(15)
+    time.sleep(20)
     p3.start()
-    time.sleep(15)
+    time.sleep(20)
     p4.start()
 
