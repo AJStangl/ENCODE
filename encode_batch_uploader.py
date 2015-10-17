@@ -206,6 +206,7 @@ def job_fetch(username, wid, base_url, password, key, secret, thread):
     :param wid: The word id provided by experiment_add()
     :return: A JSON (dict) of the response from experiment_fetch
     '''
+    time.sleep(60)
     token = get_token(username, password, key, secret, thread)
     url = base_url + "api/v1/jobs/%d/?username=%s&token=%s" % (wid, username, token)
     r = requests.get(url)
