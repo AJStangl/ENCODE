@@ -425,7 +425,7 @@ def run_all(min, max):
 
         comp_dict = json.dumps(job_fetch(username, wid, base_url, password, key, secret, thread))
 
-        print thread + str(wid) + " " + status
+        print thread + " " + str(wid) + " " + status
 
         if status == "Completed":
             system_elapsed = timeit.default_timer() - start_time
