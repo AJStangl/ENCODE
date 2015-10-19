@@ -1,9 +1,10 @@
 # __author__ = 'AJ'
-import json, requests, os, sys
+import json, requests, os, sys, csv
 from threading import Thread
 import threading
 import Queue
 from encode_batch_uploader import file_list, check_status, job_fetch, additional_metadata, open_metadata_file, time
+from encode_batch_uploader import get_token
 def user_data(mfile):
 
     '''
@@ -18,52 +19,43 @@ def user_data(mfile):
     return login
 
 
+def get_job(wid, base_url, token):
+    url = base_url + "api/v1/jobs/%d/?username=%s&token=%s" % (wid, username, token)
+    r = requests.get(url)
+    print r
+    response_dict = r.json()
+    return response_dict
 
 
-def test(username, password, key, secret, thread):
-    while True:
-        payload = {'grant_type': "client_credentials", 'username': username, 'password': password, 'scope': 'PRODUCTION'}
-        auth = (key, secret)
-        r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
-        if r.status_code != 200:
-            print thread + " Problem With obtaining Token - Sleep and Continue"
-            time.sleep(10)
-            continue
-        r = r.json()
-        refresh = r["refresh_token"]
-        payload = {'grant_type': 'refresh_token', 'refresh_token': refresh}
-        r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
-        if r.status_code != 200:
-            print thread + " Problem With Refreshing Token - Sleep and Continue"
-            time.sleep(10)
-            continue
-        r = r.json()
-        print thread + " " + test.__name__
-        return r['access_token']
-
-def runall():
-    thread = threading.current_thread().name
-    print thread + " " + runall.__name__
-    base_url = "https://geco.iplantcollaborative.org/coge/"
-    login = user_data('login.json')
-    user = user_data('login.json')
-    username = user["username"]
-    password = user["password"]
-    secret = user["secret"]
-    key = user["key"]
-    test(username, password, key, secret, thread)
 
 
-def x():
-    print "do i print?"
+
+
 if __name__ == '__main__':
-    #
-    # p1 = Thread(target=runall)
-    # p2 = Thread(target=runall)
-    # p3 = Thread(target=runall)
-    # p4 = Thread(target=runall)
-    #
-    # p1.start()
-    # p2.start()
-    # p3.start()
-    # p4.start()
+    login = user_data("login.json")
+    username = login["username"]
+    password = login["password"]
+    secret = login["secret"]
+    key = login["key"]
+    base_url = "https://geco.iplantcollaborative.org/coge/"
+    thread = threading.current_thread().name
+    token = get_token(username, password, key, secret, thread)
+    comp_dict = get_job(31619, base_url, token)
+
+    exp_name = comp_dict['results'][0]['name'].split(" ")[0]
+    status = comp_dict['status']
+    elapsed = []
+    for elem in comp_dict['tasks']:
+        if elem['elapsed'] != None:
+            elapsed.append(elem['elapsed'])
+    elapsed = sum(elapsed)
+    list = [exp_name,comp_dict,elapsed]
+    with open('test.tsv', 'wb') as f:
+        comp_log = csv.writer(f, lineterminator="\n", delimiter='\t')
+        comp_log.writerow(list)
+        f.close()
+
+
+
+
+

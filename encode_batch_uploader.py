@@ -133,44 +133,77 @@ def additional_metadata(metadata):
     return add_dict
 
 
-def notebook_add(thread, add_meta, username, token, base_url):
-    '''
-
-    :param add_meta:Additional Meta Hash from for giving the proper id and name to note books
-    :return: Put response (Dict)
-    '''
-
-    class Notebook:
-        def __init__(self, nb_name, desc, tp):
-            self.metadata = {"name": nb_name, "description": desc, "restricted": False, "type": tp}
-
-    url = base_url + "api/v1/notebooks/?username=%s&token=%s" % (username, token)
-    headers = {'Content-type': 'application/json'}
-    nb_name = add_meta["Encode Biosample ID"]
-    desc = add_meta["Cell Type"]
-    tp = "mixed"
-
-    pay = json.dumps(vars(Notebook(nb_name, desc, tp)))
-    r = requests.put(url, pay, headers=headers)
-    log_request(thread, r, func_name=notebook_add.__name__)
-    response_dict = r.json()
-    return response_dict
-
-
-def notebook_search(term, base_url, username, token, thread):
+# def notebook_add(thread, add_meta, username, token, base_url):
+#     '''
+#
+#     :param add_meta:Additional Meta Hash from for giving the proper id and name to note books
+#     :return: Put response (Dict)
+#     '''
+#
+#     class Notebook:
+#         def __init__(self, nb_name, desc, tp):
+#             self.metadata = {"name": nb_name, "description": desc, "restricted": False, "type": tp}
+#
+#     url = base_url + "api/v1/notebooks/?username=%s&token=%s" % (username, token)
+#     headers = {'Content-type': 'application/json'}
+#     nb_name = add_meta["Encode Biosample ID"]
+#     desc = add_meta["Cell Type"]
+#     tp = "mixed"
+#
+#     pay = json.dumps(vars(Notebook(nb_name, desc, tp)))
+#     r = requests.put(url, pay, headers=headers)
+#     log_request(thread, r, func_name=notebook_add.__name__)
+#     response_dict = r.json()
+#     return response_dict
+#
+#
+# def notebook_search(term, base_url, username, token, thread):
+#     """
+#     This function will check if a Notebook already exists A
+#     :param term:The search term for the notebook (notebook name)
+#     :return: false if does not exist or dict of notebook vars if does
+#     """
+#     url = base_url + "api/v1/notebooks/search/%s/?username=%s&token=%s" % (term, username, token)
+#     r = requests.get(url)
+#     log_request(thread, r, func_name=notebook_search.__name__)
+#     response_dict = r.json()
+#     try:
+#         return response_dict["notebooks"][0]
+#     except IndexError:
+#         return False
+def notebook_search(term, add_meta, base_url, username, token, thread):
     """
     This function will check if a Notebook already exists A
     :param term:The search term for the notebook (notebook name)
     :return: false if does not exist or dict of notebook vars if does
     """
-    url = base_url + "api/v1/notebooks/search/%s/?username=%s&token=%s" % (term, username, token)
-    r = requests.get(url)
-    log_request(thread, r, func_name=notebook_search.__name__)
-    response_dict = r.json()
-    try:
-        return response_dict["notebooks"][0]
-    except IndexError:
-        return False
+    while True:
+        url = base_url + "api/v1/notebooks/search/%s/?username=%s&token=%s" % (term, username, token)
+        r = requests.get(url)
+        time.sleep(5)
+        if r.status_code == 200:
+            log_request(thread, r, func_name=notebook_search.__name__)
+            response_dict = r.json()
+            try:
+                return response_dict["notebooks"][0]['id']
+            except KeyError:
+                time.sleep(10)
+                class Notebook:
+                    def __init__(self, nb_name, desc, tp):
+                        self.metadata = {"name": nb_name, "description": desc, "restricted": False, "type": tp}
+            url = base_url + "api/v1/notebooks/?username=%s&token=%s" % (username, token)
+            headers = {'Content-type': 'application/json'}
+            nb_name = add_meta["Encode Biosample ID"]
+            desc = add_meta["Cell Type"]
+            tp = "mixed"
+            pay = json.dumps(vars(Notebook(nb_name, desc, tp)))
+            r = requests.put(url, pay, headers=headers)
+            log_request(thread, r, func_name="Notebook add")
+            response_dict = r.json()
+            return response_dict['id']
+        else:
+            time.sleep(5)
+            continue
 
 
 def experiment_add(username, token, metadata, base_url, nb_id, thread):
@@ -185,18 +218,22 @@ def experiment_add(username, token, metadata, base_url, nb_id, thread):
     :param metadata: List of Json Objects )
     :return: None
     '''
-
-    data = metadata
-    data = json.loads(data)
-    data["notebook_id"] = int(nb_id)
-    data = json.dumps(data)
-
-    url = base_url + "api/v1/experiments?username=%s&token=%s" % (username, token)
-    headers = {'Content-type': 'application/json'}
-    r = requests.put(url, data, headers=headers)
-    log_request(thread, r, func_name=experiment_add.__name__)
-    response_dict = r.json()
-    return response_dict
+    while True:
+        data = metadata
+        data = json.loads(data)
+        data["notebook_id"] = int(nb_id)
+        data = json.dumps(data)
+        url = base_url + "api/v1/experiments?username=%s&token=%s" % (username, token)
+        headers = {'Content-type': 'application/json'}
+        r = requests.put(url, data, headers=headers)
+        if r.status_code == 200:
+            log_request(thread, r, func_name=experiment_add.__name__)
+            response_dict = r.json()
+            return response_dict
+        else:
+            print thread + " Error in Adding Experiment: " + str(r._content)
+            time.sleep(5)
+            continue
 
 
 def job_fetch(username, wid, base_url, password, key, secret, thread):
@@ -206,14 +243,17 @@ def job_fetch(username, wid, base_url, password, key, secret, thread):
     :param wid: The word id provided by experiment_add()
     :return: A JSON (dict) of the response from experiment_fetch
     '''
-    time.sleep(60)
-    token = get_token(username, password, key, secret, thread)
-    url = base_url + "api/v1/jobs/%d/?username=%s&token=%s" % (wid, username, token)
-    r = requests.get(url)
-    log_request(thread, r, func_name=job_fetch.__name__)
-    response_dict = r.json()
-    return response_dict
-
+    while True:
+        token = get_token(username, password, key, secret, thread)
+        url = base_url + "api/v1/jobs/%d/?username=%s&token=%s" % (wid, username, token)
+        r = requests.get(url)
+        log_request(thread, r, func_name=job_fetch.__name__)
+        if r.status_code == 200:
+            time.sleep(5)
+            response_dict = r.json()
+            return response_dict
+        else:
+            continue
 
 def experiment_search(username, token, exp_name, base_url, thread):
     url = base_url + "api/v1/experiments/search/%s/?username=%s&token=%s" % (exp_name, username, token)
@@ -258,14 +298,17 @@ def check_status(wid, wait, base_url, username, password, key, secret, thread):
             continue
 
 
-def write_log(exp_name, wid, status, comp_dict, elapsed, term, thread,add_meta ): # add_meta["File Size"] in the future
+def write_log(exp_name, wid, status, comp_dict, system_elapsed, term, thread,add_meta ): # add_meta["File Size"] in the future
     if status == "Completed":
         cdat = []
-        comp_dict = json.dumps(comp_dict)
         fsize = add_meta["File Size"]
-        cl = [exp_name, wid, status, comp_dict, fsize, elapsed]
+        elapsed = []
+        for elem in comp_dict['tasks']:
+            if elem['elapsed'] != None:
+                elapsed.append(elem['elapsed'])
+        elapsed = sum(elapsed)
+        cl = [exp_name, wid, status, comp_dict, fsize, elapsed, system_elapsed]
         cdat.append(cl)
-
         with open("logs/" + "Completed_Log_" + term + "_" + thread + ".tsv" , "ab") as f:
             comp_log = csv.writer(f, lineterminator="\n", delimiter='\t')
             for elem in cdat:
@@ -274,9 +317,13 @@ def write_log(exp_name, wid, status, comp_dict, elapsed, term, thread,add_meta )
 
     else:
         fdat = []
-        comp_dict = json.dumps(comp_dict)
+        elapsed = []
         fsize = add_meta["File Size"]
-        fl = [exp_name, wid, status, comp_dict, fsize, elapsed]
+        for elem in comp_dict['tasks']:
+            if elem['elapsed'] != None:
+                elapsed.append(elem['elapsed'])
+        elapsed = sum(elapsed)
+        fl = [exp_name, wid, status, comp_dict, fsize, elapsed, system_elapsed]
         fdat.append(fl)
         with open("logs/" + "Failed_Log_" + term + "_" + thread + ".tsv", "ab") as f:
             comp_log = csv.writer(f, lineterminator="\n", delimiter='\t')
@@ -348,30 +395,31 @@ def run_all(min, max):
         pri_meta = primary_metadata(metadata)
         add_meta = additional_metadata(metadata)
         term = add_meta["Encode Biosample ID"]
-        nb_check = notebook_search(term, base_url, username, token, thread)
+        # nb_check = notebook_search(term, base_url, username, token, thread)
+        #
+        # if nb_check == False:
+        #     nb_id = notebook_add(thread, add_meta, username, token, base_url)["id"]
+        #     print thread + " Adding Notebook ID: " + str(nb_id)
+        #
+        # else:
+        #     nb_id = notebook_search(term, base_url, username, token, thread)["id"]
+        #     print thread + " Found Notebook ID " + str(nb_id)
 
-        if nb_check == False:
-            nb_id = notebook_add(thread, add_meta, username, token, base_url)["id"]
-            print thread + " Adding Notebook ID: " + str(nb_id)
+        nb_id = notebook_search(term, add_meta, base_url, username, token, thread)
 
-        else:
-            nb_id = notebook_search(term, base_url, username, token, thread)["id"]
-            print thread + " Found Notebook ID" + str(nb_id)
+        print thread + " Notebook ID " + str(nb_id)
 
         exp_name = pri_meta["name"]
 
         print thread + " Experiment Name: " + exp_name
 
-        print thread + " Obtaining New token"
+        print thread + " Obtaining New token "
 
         token = get_token(username, password, key, secret, thread)
 
         wid = experiment_add(username, token, metadata, base_url, nb_id, thread)['id']
 
         print thread + " Work ID: " + str(wid) + " submitted"
-
-        print thread + " Removing " + json_file_list[i] + " from files"
-        remove_file(i, sub_dir, json_file_list)
 
         status = check_status(wid, wait, base_url, username, password, key, secret, thread)
 
@@ -380,8 +428,17 @@ def run_all(min, max):
         print thread + str(wid) + " " + status
 
         if status == "Completed":
-            elapsed = timeit.default_timer() - start_time
-            write_log(exp_name, wid, status, comp_dict, elapsed, term, thread, add_meta)
+            system_elapsed = timeit.default_timer() - start_time
+            print thread + " Removing " + json_file_list[i] + " from files"
+            remove_file(i, sub_dir, json_file_list)
+            write_log(exp_name, wid, status, comp_dict, system_elapsed, term, thread, add_meta)
+        elif status == "Failed":
+            system_elapsed = timeit.default_timer() - start_time
+            write_log(exp_name, wid, status, comp_dict, system_elapsed, term, thread, add_meta)
+
+        print thread + " Moving to Next Job "
+
+
 
 
 
