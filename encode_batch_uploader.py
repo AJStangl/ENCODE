@@ -435,6 +435,7 @@ def run_all(min, max):
         elif status == "Failed":
             system_elapsed = timeit.default_timer() - start_time
             write_log(exp_name, wid, status, comp_dict, system_elapsed, term, thread, add_meta)
+            
 
         print thread + " Moving to Next Job "
 
@@ -445,8 +446,8 @@ def run_all(min, max):
 
 
 if __name__ == '__main__':
-    sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
-    # sub_dir = '/home/ajstangl/encode/jsons'  # for geco
+    # sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
+    sub_dir = '/home/ajstangl/encode/jsons'  # for geco
     json_files = file_list(sub_dir)
     total_files = max_file_length(json_files)
     temp = split_jobs(range(total_files), 4)
