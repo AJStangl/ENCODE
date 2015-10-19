@@ -413,10 +413,6 @@ def run_all(min, max):
 
         print thread + " Experiment Name: " + exp_name
 
-        print thread + " Obtaining New token "
-
-        token = get_token(username, password, key, secret, thread)
-
         wid = experiment_add(username, token, metadata, base_url, nb_id, thread)['id']
 
         print thread + " Work ID: " + str(wid) + " submitted"
@@ -435,7 +431,7 @@ def run_all(min, max):
         elif status == "Failed":
             system_elapsed = timeit.default_timer() - start_time
             write_log(exp_name, wid, status, comp_dict, system_elapsed, term, thread, add_meta)
-            
+
 
         print thread + " Moving to Next Job "
 
