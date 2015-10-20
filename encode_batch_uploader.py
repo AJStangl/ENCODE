@@ -171,7 +171,7 @@ def additional_metadata(metadata):
 #         return response_dict["notebooks"][0]
 #     except IndexError:
 #         return False
-def notebook_search(term, add_meta, base_url, username, token, thread):
+def notebook_search(term, add_meta, base_url, username, token, thread, password, key, secret):
     """
     This function will check if a Notebook already exists A
     :param term:The search term for the notebook (notebook name)
@@ -188,25 +188,34 @@ def notebook_search(term, add_meta, base_url, username, token, thread):
                 return response_dict["notebooks"][0]['id']
             except KeyError:
                 time.sleep(10)
+                print thread + " notebook not found for " + term + " adding new notebook "
                 class Notebook:
                     def __init__(self, nb_name, desc, tp):
                         self.metadata = {"name": nb_name, "description": desc, "restricted": False, "type": tp}
-            url = base_url + "api/v1/notebooks/?username=%s&token=%s" % (username, token)
-            headers = {'Content-type': 'application/json'}
-            nb_name = add_meta["Encode Biosample ID"]
-            desc = add_meta["Cell Type"]
-            tp = "mixed"
-            pay = json.dumps(vars(Notebook(nb_name, desc, tp)))
-            r = requests.put(url, pay, headers=headers)
-            log_request(thread, r, func_name="Notebook add")
-            response_dict = r.json()
-            return response_dict['id']
+                url = base_url + "api/v1/notebooks/?username=%s&token=%s" % (username, token)
+                headers = {'Content-type': 'application/json'}
+                nb_name = add_meta["Encode Biosample ID"]
+                desc = add_meta["Cell Type"]
+                tp = "mixed"
+                pay = json.dumps(vars(Notebook(nb_name, desc, tp)))
+                r = requests.put(url, pay, headers=headers)
+                if r.status_code == 200:
+                    log_request(thread, r, func_name="Notebook add")
+                    response_dict = r.json()
+                    return response_dict['id']
+                else:
+                    print thread + " Error in notebook add response " + str(r.content)
+                    token = get_token(username, password, key, secret, thread)
+                    continue
         else:
             time.sleep(5)
+            print thread + ' Error in notebook search '  + str(r.content)
+            log_request(thread, r, func_name= notebook_search.__name__)
+            token = get_token(username, password, key, secret, thread)
             continue
 
 
-def experiment_add(username, token, metadata, base_url, nb_id, thread):
+def experiment_add(username, token, metadata, base_url, nb_id, thread, password, key, secret):
 
     '''
     This function will take in a meta data file, iterate through the column in the TSV file and upload experiment
@@ -231,12 +240,14 @@ def experiment_add(username, token, metadata, base_url, nb_id, thread):
             response_dict = r.json()
             return response_dict
         else:
+            log_request(thread, r, func_name=experiment_add.__name__)
+            token = get_token(username, password, key, secret, thread)
             print thread + " Error in Adding Experiment: " + str(r._content)
             time.sleep(5)
             continue
 
 
-def job_fetch(username, wid, base_url, password, key, secret, thread):
+def job_fetch(username, wid, base_url, password, key, secret, thread, token, wait):
     '''
     :param username: the username for auth
     :param token: The token provided from get_token()
@@ -244,16 +255,22 @@ def job_fetch(username, wid, base_url, password, key, secret, thread):
     :return: A JSON (dict) of the response from experiment_fetch
     '''
     while True:
-        token = get_token(username, password, key, secret, thread)
+        time.sleep(5)
         url = base_url + "api/v1/jobs/%d/?username=%s&token=%s" % (wid, username, token)
         r = requests.get(url)
         log_request(thread, r, func_name=job_fetch.__name__)
         if r.status_code == 200:
             time.sleep(5)
             response_dict = r.json()
-            return response_dict
+            if response_dict['status'] == "Running":
+                time.sleep(wait)
+                continue
+            else:
+                return response_dict
         else:
+            token = get_token(username, password, key, secret, thread)
             continue
+
 
 def experiment_search(username, token, exp_name, base_url, thread):
     url = base_url + "api/v1/experiments/search/%s/?username=%s&token=%s" % (exp_name, username, token)
@@ -263,10 +280,10 @@ def experiment_search(username, token, exp_name, base_url, thread):
     try:
         return resp_dict["experiments"][0]
     except IndexError:
-        return False
+        return False # Not Currently Used
 
 
-def check_status(wid, wait, base_url, username, password, key, secret, thread):
+def check_status(wid, wait, base_url, username, password, key, secret, thread, token): # Currently Not Being Used
     '''
 
     :param username:Your iPlant Username
@@ -280,7 +297,7 @@ def check_status(wid, wait, base_url, username, password, key, secret, thread):
     while running:
         try:
             time.sleep(wait)
-            status = job_fetch(username, wid, base_url, password, key, secret, thread)
+            status = job_fetch(username, wid, base_url, password, key, secret, thread, token, wait)
             time.sleep(wait)
             status = status['status']
             time.sleep(wait)
@@ -298,7 +315,7 @@ def check_status(wid, wait, base_url, username, password, key, secret, thread):
             continue
 
 
-def write_log(exp_name, wid, status, comp_dict, system_elapsed, term, thread,add_meta ): # add_meta["File Size"] in the future
+def write_log(exp_name, wid, status, comp_dict, system_elapsed, term, thread, add_meta):
     if status == "Completed":
         cdat = []
         fsize = add_meta["File Size"]
@@ -333,6 +350,7 @@ def write_log(exp_name, wid, status, comp_dict, system_elapsed, term, thread,add
 
 
 def next_job(i, status):
+    # Not currently in use
     """
     :param status: The status of
     :return: i
@@ -373,6 +391,7 @@ def run_all(min, max):
 
     thread = threading.current_thread().name
     start_time = timeit.default_timer()
+
     # Obtain user information
     user = user_data('login.json')
     username = user["username"]
@@ -395,17 +414,8 @@ def run_all(min, max):
         pri_meta = primary_metadata(metadata)
         add_meta = additional_metadata(metadata)
         term = add_meta["Encode Biosample ID"]
-        # nb_check = notebook_search(term, base_url, username, token, thread)
-        #
-        # if nb_check == False:
-        #     nb_id = notebook_add(thread, add_meta, username, token, base_url)["id"]
-        #     print thread + " Adding Notebook ID: " + str(nb_id)
-        #
-        # else:
-        #     nb_id = notebook_search(term, base_url, username, token, thread)["id"]
-        #     print thread + " Found Notebook ID " + str(nb_id)
 
-        nb_id = notebook_search(term, add_meta, base_url, username, token, thread)
+        nb_id = notebook_search(term, add_meta, base_url, username, token, thread, password, key, secret)
 
         print thread + " Notebook ID " + str(nb_id)
 
@@ -413,13 +423,13 @@ def run_all(min, max):
 
         print thread + " Experiment Name: " + exp_name
 
-        wid = experiment_add(username, token, metadata, base_url, nb_id, thread)['id']
+        wid = experiment_add(username, token, metadata, base_url, nb_id, thread, password, key, secret)['id']
 
         print thread + " Work ID: " + str(wid) + " submitted"
 
-        status = check_status(wid, wait, base_url, username, password, key, secret, thread)
+        comp_dict = job_fetch(username, wid, base_url, password, key, secret, thread, token, wait)
 
-        comp_dict = json.dumps(job_fetch(username, wid, base_url, password, key, secret, thread))
+        status = comp_dict['status']
 
         print thread + " " + str(wid) + " " + status
 
@@ -431,7 +441,6 @@ def run_all(min, max):
         elif status == "Failed":
             system_elapsed = timeit.default_timer() - start_time
             write_log(exp_name, wid, status, comp_dict, system_elapsed, term, thread, add_meta)
-
 
         print thread + " Moving to Next Job "
 
