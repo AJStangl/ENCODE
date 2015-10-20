@@ -133,44 +133,6 @@ def additional_metadata(metadata):
     return add_dict
 
 
-# def notebook_add(thread, add_meta, username, token, base_url):
-#     '''
-#
-#     :param add_meta:Additional Meta Hash from for giving the proper id and name to note books
-#     :return: Put response (Dict)
-#     '''
-#
-#     class Notebook:
-#         def __init__(self, nb_name, desc, tp):
-#             self.metadata = {"name": nb_name, "description": desc, "restricted": False, "type": tp}
-#
-#     url = base_url + "api/v1/notebooks/?username=%s&token=%s" % (username, token)
-#     headers = {'Content-type': 'application/json'}
-#     nb_name = add_meta["Encode Biosample ID"]
-#     desc = add_meta["Cell Type"]
-#     tp = "mixed"
-#
-#     pay = json.dumps(vars(Notebook(nb_name, desc, tp)))
-#     r = requests.put(url, pay, headers=headers)
-#     log_request(thread, r, func_name=notebook_add.__name__)
-#     response_dict = r.json()
-#     return response_dict
-#
-#
-# def notebook_search(term, base_url, username, token, thread):
-#     """
-#     This function will check if a Notebook already exists A
-#     :param term:The search term for the notebook (notebook name)
-#     :return: false if does not exist or dict of notebook vars if does
-#     """
-#     url = base_url + "api/v1/notebooks/search/%s/?username=%s&token=%s" % (term, username, token)
-#     r = requests.get(url)
-#     log_request(thread, r, func_name=notebook_search.__name__)
-#     response_dict = r.json()
-#     try:
-#         return response_dict["notebooks"][0]
-#     except IndexError:
-#         return False
 def notebook_search(term, add_meta, base_url, username, token, thread, password, key, secret):
     """
     This function will check if a Notebook already exists A
@@ -186,7 +148,7 @@ def notebook_search(term, add_meta, base_url, username, token, thread, password,
             response_dict = r.json()
             try:
                 return response_dict["notebooks"][0]['id']
-            except KeyError:
+            except IndexError:
                 time.sleep(10)
                 print thread + " notebook not found for " + term + " adding new notebook "
                 class Notebook:
