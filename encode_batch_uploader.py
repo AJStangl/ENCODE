@@ -2,6 +2,7 @@ __author__ = 'AJ'
 import json, requests, os, time, timeit, csv
 from threading import Thread
 import threading
+from datetime import datetime
 
 
 def user_data(mfile):
@@ -24,6 +25,7 @@ def log_request(thread, r, func_name):
     :return: none
     '''
     with open(thread + '_log_requst.txt', 'ab') as f:
+        f.write('Thread: ' + thread + '\n')
         f.write('Function: ' + func_name + '\n')
         f.write('request: ' + str(r.request) + '\n')
         f.write('headers: '+ str(r.headers) + '\n')
@@ -35,6 +37,7 @@ def log_request(thread, r, func_name):
         f.write('elapsed: ' + str(r.elapsed) + '\n')
         r = r.json()
         f.write('json: ' + str(r) + '\n')
+        f.write(datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
         f.write('\n\n')
         f.close()
 
@@ -142,7 +145,6 @@ def notebook_search(term, add_meta, base_url, username, token, thread, password,
     while True:
         url = base_url + "api/v1/notebooks/search/%s/?username=%s&token=%s" % (term, username, token)
         r = requests.get(url)
-        time.sleep(5)
         if r.status_code == 200:
             log_request(thread, r, func_name=notebook_search.__name__)
             response_dict = r.json()
@@ -170,7 +172,6 @@ def notebook_search(term, add_meta, base_url, username, token, thread, password,
                     token = get_token(username, password, key, secret, thread)
                     continue
         else:
-            time.sleep(5)
             print thread + ' Error in notebook search '  + str(r.content)
             log_request(thread, r, func_name= notebook_search.__name__)
             token = get_token(username, password, key, secret, thread)
@@ -217,12 +218,10 @@ def job_fetch(username, wid, base_url, password, key, secret, thread, token, wai
     :return: A JSON (dict) of the response from experiment_fetch
     '''
     while True:
-        time.sleep(5)
         url = base_url + "api/v1/jobs/%d/?username=%s&token=%s" % (wid, username, token)
         r = requests.get(url)
         log_request(thread, r, func_name=job_fetch.__name__)
         if r.status_code == 200:
-            time.sleep(5)
             response_dict = r.json()
             if response_dict['status'] == "Running":
                 time.sleep(wait)

@@ -4,7 +4,9 @@ from threading import Thread
 import threading
 import Queue
 from encode_batch_uploader import file_list,additional_metadata, open_metadata_file, time #check_status, job_fetch,
-from encode_batch_uploader import get_token
+# from encode_batch_uploader import get_token
+from datetime import datetime
+
 def user_data(mfile):
 
     '''
@@ -51,7 +53,35 @@ def job_fetch(username, wid, base_url, password, key, secret, thread, token):
             token = get_token(username, password, key, secret, thread)
             continue
 
+def get_token(username, password, key, secret, thread):
+    '''
+    This Function Retrieves the access token needed to upload data
+    '''
+    func_name = get_token.__name__
 
+    while True:
+        payload = {'grant_type': "client_credentials", 'username': username, 'password': password, 'scope': 'PRODUCTION'}
+        auth = (key, secret)
+        r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
+        if r.status_code != 200:
+            print thread + " Problem With obtaining Token - Sleep and Continue " + str(r._content)
+            time.sleep(5)
+            continue
+        r = r.json()
+        return r
+
+def refresh_token(r, key, secret):
+    while True:
+        auth = (key, secret)
+        refresh = r["refresh_token"]
+        payload = {'grant_type': 'refresh_token', 'refresh_token': refresh}
+        r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
+        if r.status_code != 200:
+            print thread + " Problem With Refreshing Token - Sleep and Continue"
+            time.sleep(5)
+            continue
+        r = r.json()
+        return r
 
 
 
@@ -63,12 +93,35 @@ if __name__ == '__main__':
     key = login["key"]
     base_url = "https://geco.iplantcollaborative.org/coge/"
     thread = threading.current_thread().name
-    token = get_token(username, password, key, secret, thread)
+    # token = get_token(username, password, key, secret, thread)
     wid = 31667
-    comp_dict = get_job(31619, base_url, token)
+    # comp_dict = get_job(31619, base_url, token)
+    while True:
+        r = get_token(username, password, key, secret, thread)
+        timer = r['expires_in']
+        while timer > 14390:
+            timer = get_token(username, password, key, secret, thread)['expires_in']
+            token = get_token(username, password, key, secret, thread)['access_token']
+            print token
+            print timer
+
+        if timer < 14390:
+            timer = refresh_token(r, key, secret)
+            print "refreshing token"
+            token = refresh_token(r, key, secret)['access_token']
+            print token
+            print timer
+            continue
 
 
-    print job_fetch(username,wid, base_url, password,key,secret,thread, token)
+
+
+
+
+
+
+
+    # print job_fetch(username,wid, base_url, password,key,secret,thread, token)
 
 
 
