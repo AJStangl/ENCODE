@@ -1,8 +1,7 @@
 __author__ = 'AJ'
 import json, requests, os, time, timeit, csv
-from threading import Thread
-import threading
 from datetime import datetime
+from collections import deque
 
 
 def user_data(mfile):
@@ -18,14 +17,13 @@ def user_data(mfile):
     return login
 
 
-def log_request(thread, r, func_name):
+def log_request(r, func_name):
     '''
 
     :param r: response
     :return: none
     '''
-    with open(thread + '_log_requst.txt', 'ab') as f:
-        f.write('Thread: ' + thread + '\n')
+    with open('_log_requst.txt', 'ab') as f:
         f.write('Function: ' + func_name + '\n')
         f.write('request: ' + str(r.request) + '\n')
         f.write('headers: '+ str(r.headers) + '\n')
@@ -53,7 +51,7 @@ def remove_file(i, sub_dir, json_file_list):
     os.remove(sub_dir + "/" + json_file_list[i])
 
 
-def get_token(username, password, key, secret, thread):
+def get_token(username, password, key, secret):
     '''
     This Function Retrieves the access token needed to upload data
     '''
@@ -63,20 +61,19 @@ def get_token(username, password, key, secret, thread):
         auth = (key, secret)
         r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
         if r.status_code != 200:
-            print thread + " Problem With obtaining Token - Sleep and Continue "
-            time.sleep(30)
+            print " Problem With obtaining Token - Sleep and Continue "
             continue
         r = r.json()
         refresh = r["refresh_token"]
         payload = {'grant_type': 'refresh_token', 'refresh_token': refresh}
         r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
         if r.status_code != 200:
-            print thread + " Problem With Refreshing Token - Sleep and Continue"
+            print "Problem With Refreshing Token - Sleep and Continue"
             time.sleep(30)
             continue
-        log_request(thread, r, func_name)
+        log_request(r, func_name)
         r = r.json()
-        print thread + " Obtained Token " + r['access_token']
+        print "Obtained Token " + r['access_token']
         return r['access_token']
 
 
@@ -136,7 +133,7 @@ def additional_metadata(metadata):
     return add_dict
 
 
-def notebook_search(term, add_meta, base_url, username, token, thread, password, key, secret):
+def notebook_search(term, add_meta, base_url, username, token):
     """
     This function will check if a Notebook already exists A
     :param term:The search term for the notebook (notebook name)
@@ -146,13 +143,13 @@ def notebook_search(term, add_meta, base_url, username, token, thread, password,
         url = base_url + "api/v1/notebooks/search/%s/?username=%s&token=%s" % (term, username, token)
         r = requests.get(url)
         if r.status_code == 200:
-            log_request(thread, r, func_name=notebook_search.__name__)
+            log_request(r, func_name=notebook_search.__name__)
             response_dict = r.json()
             try:
                 return response_dict["notebooks"][0]['id']
             except IndexError:
-                time.sleep(10)
-                print thread + " notebook not found for " + term + " adding new notebook "
+                #time.sleep(10)
+                print " notebook not found for " + term + " adding new notebook "
                 class Notebook:
                     def __init__(self, nb_name, desc, tp):
                         self.metadata = {"name": nb_name, "description": desc, "restricted": False, "type": tp}
@@ -164,21 +161,17 @@ def notebook_search(term, add_meta, base_url, username, token, thread, password,
                 pay = json.dumps(vars(Notebook(nb_name, desc, tp)))
                 r = requests.put(url, pay, headers=headers)
                 if r.status_code == 200:
-                    log_request(thread, r, func_name="Notebook add")
+                    log_request(r, func_name="Notebook add")
                     response_dict = r.json()
                     return response_dict['id']
+
                 else:
-                    print thread + " Error in notebook add response " + str(r.content)
-                    token = get_token(username, password, key, secret, thread)
+                    print ' Error in notebook search '  + str(r.content)
+                    log_request(r, func_name= notebook_search.__name__)
                     continue
-        else:
-            print thread + ' Error in notebook search '  + str(r.content)
-            log_request(thread, r, func_name= notebook_search.__name__)
-            token = get_token(username, password, key, secret, thread)
-            continue
 
 
-def experiment_add(username, token, metadata, base_url, nb_id, thread, password, key, secret):
+def experiment_add(username, token, metadata, base_url, nb_id, password, key, secret):
 
     '''
     This function will take in a meta data file, iterate through the column in the TSV file and upload experiment
@@ -199,84 +192,37 @@ def experiment_add(username, token, metadata, base_url, nb_id, thread, password,
         headers = {'Content-type': 'application/json'}
         r = requests.put(url, data, headers=headers)
         if r.status_code == 200:
-            log_request(thread, r, func_name=experiment_add.__name__)
+            log_request(r, func_name=experiment_add.__name__)
             response_dict = r.json()
             return response_dict
         else:
-            log_request(thread, r, func_name=experiment_add.__name__)
-            token = get_token(username, password, key, secret, thread)
-            print thread + " Error in Adding Experiment: " + str(r._content)
-            time.sleep(5)
+            log_request(r, func_name=experiment_add.__name__)
+            token = get_token(username, password, key, secret)
+            print " Error in Adding Experiment: " + str(r._content)
             continue
 
 
-def job_fetch(username, wid, base_url, password, key, secret, thread, token, wait):
+def job_fetch(username, wid, base_url, token, wait):
     '''
     :param username: the username for auth
     :param token: The token provided from get_token()
     :param wid: The word id provided by experiment_add()
     :return: A JSON (dict) of the response from experiment_fetch
     '''
-    while True:
-        url = base_url + "api/v1/jobs/%d/?username=%s&token=%s" % (wid, username, token)
-        r = requests.get(url)
-        log_request(thread, r, func_name=job_fetch.__name__)
-        if r.status_code == 200:
-            response_dict = r.json()
-            if response_dict['status'] == "Running":
-                time.sleep(wait)
-                continue
-            else:
-                return response_dict
-        else:
-            token = get_token(username, password, key, secret, thread)
-            continue
-
-
-def experiment_search(username, token, exp_name, base_url, thread):
-    url = base_url + "api/v1/experiments/search/%s/?username=%s&token=%s" % (exp_name, username, token)
+    #while True:
+    url = base_url + "api/v1/jobs/%d/?username=%s&token=%s" % (wid, username, token)
     r = requests.get(url)
-    log_request(thread, r, func_name=experiment_search.__name__)
-    resp_dict = r.json()
-    try:
-        return resp_dict["experiments"][0]
-    except IndexError:
-        return False # Not Currently Used
+    log_request(r, func_name=job_fetch.__name__)
+    #if r.status_code == 200:
+    response_dict = r.json()
+    #if response_dict['status'] == "Running":
+        #time.sleep(wait)
+        #continue
+    #else:
+    return response_dict
 
 
-def check_status(wid, wait, base_url, username, password, key, secret, thread, token): # Currently Not Being Used
-    '''
-
-    :param username:Your iPlant Username
-    :param token: Token from iPlant Auth
-    :param wid:Work ID from experiment_add
-    :Param wait: Time in seconds until the status is checked again
-    :return: The Status of the Job
-    '''
-
-    running = True
-    while running:
-        try:
-            time.sleep(wait)
-            status = job_fetch(username, wid, base_url, password, key, secret, thread, token, wait)
-            time.sleep(wait)
-            status = status['status']
-            time.sleep(wait)
-            if status == "Completed":
-                print thread + " " + status
-                return status
-            elif status == "Running":
-                continue
-            else:
-                print thread + " " + status
-                return status
-        except KeyError:
-            print thread + " job response json: " + str(job_fetch(username, wid, base_url, password, key, secret, thread))
-            print thread + " Error in KeyStatus " + check_status.__name__ + " Continuing"
-            continue
-
-
-def write_log(exp_name, wid, status, comp_dict, system_elapsed, term, thread, add_meta):
+def write_log(exp_name, wid, status, comp_dict, system_elapsed, term, add_meta):
     if status == "Completed":
         cdat = []
         fsize = add_meta["File Size"]
@@ -287,7 +233,7 @@ def write_log(exp_name, wid, status, comp_dict, system_elapsed, term, thread, ad
         elapsed = sum(elapsed)
         cl = [exp_name, wid, status, comp_dict, fsize, elapsed, system_elapsed]
         cdat.append(cl)
-        with open("logs/" + "Completed_Log_" + term + "_" + thread + ".tsv" , "ab") as f:
+        with open("logs/" + "Completed_Log_" + term + "_" +  ".tsv" , "ab") as f:
             comp_log = csv.writer(f, lineterminator="\n", delimiter='\t')
             for elem in cdat:
                 comp_log.writerow(elem)
@@ -303,7 +249,7 @@ def write_log(exp_name, wid, status, comp_dict, system_elapsed, term, thread, ad
         elapsed = sum(elapsed)
         fl = [exp_name, wid, status, comp_dict, fsize, elapsed, system_elapsed]
         fdat.append(fl)
-        with open("logs/" + "Failed_Log_" + term + "_" + thread + ".tsv", "ab") as f:
+        with open("logs/" + "Failed_Log_" + term + "_" + ".tsv", "ab") as f:
             comp_log = csv.writer(f, lineterminator="\n", delimiter='\t')
             for elem in fdat:
                 comp_log.writerow(elem)
@@ -311,13 +257,13 @@ def write_log(exp_name, wid, status, comp_dict, system_elapsed, term, thread, ad
 
 
 def next_job(i, status):
-    # Not currently in use
     """
     :param status: The status of
     :return: i
     """
     if status == "Completed":
         i += 1
+
     elif status == "Failed":
         i += 1
     return i
@@ -348,9 +294,8 @@ def file_remove(sub_dir, i, json_file_list):
     os.remove(sub_dir + "/" + json_file_list[i])
 
 
-def run_all(min, max):
+def run_job(json_file_list, i):
 
-    thread = threading.current_thread().name
     start_time = timeit.default_timer()
 
     # Obtain user information
@@ -359,52 +304,145 @@ def run_all(min, max):
     password = user["password"]
     secret = user["secret"]
     key = user["key"]
-
     # Set directories and obtain metadata
     base_url = "https://geco.iplantcollaborative.org/coge/"
-    sub_dir = '/home/ajstangl/encode/jsons'
-    # sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
-    json_file_list = file_list(sub_dir)
-    files = file_list(sub_dir)
-    wait = 120
+    # sub_dir = '/home/ajstangl/encode/jsons'
+    token = get_token(username, password, key, secret)
+    metadata = open_metadata_file(i, sub_dir, json_file_list)
+    pri_meta = primary_metadata(metadata)
+    add_meta = additional_metadata(metadata)
+    term = add_meta["Encode Biosample ID"]
+    nb_id = notebook_search(term, add_meta, base_url, username, token)
+    print "Notebook ID " + str(nb_id)
+    exp_name = pri_meta["name"]
+    print "Experiment Name - " + exp_name
+    wid = experiment_add(username, token, metadata, base_url, nb_id, password, key, secret)['id']
+    print "Work ID: " + str(wid) + " submitted"
+    file_remove(sub_dir,json_file_list,i)
+    return {"wid":wid, "exp_name":exp_name}
 
-    for i in range(min, max + 1):
-        token = get_token(username, password, key, secret, thread)
+'''
+        else:
+            print wid_lst
+            for elem in wid_lst:
+                comp_dict = job_fetch(username, wid, base_url, token, wait)
+                print str(elem) + ' is running'
+                status = comp_dict['status']
+                time.sleep(10)
+                if status == "Running":
+                    continue
+                else:
+                    system_elapsed = timeit.default_timer() - start_time
+                    write_log(exp_name,wid,status, comp_dict, system_elapsed, term, add_meta)
+                    wid_lst.remove(elem)
+                    i = i + 1
+                    pass
+
+        else:
+            continue
+            # comp_dict = job_fetch(username, wid, base_url, token, wait)
+            # print str(elem) + ' is running'
+            # status = comp_dict['status']
+            # time.sleep(10)
+            if status == "Running":
+                continue
+            else:
+                system_elapsed = timeit.default_timer() - start_time
+                write_log(exp_name,wid,status, comp_dict, system_elapsed, term, add_meta)
+                wid_lst.remove(elem)
+                i = i + 1
+                pass
+
+
+                comp_dict = job_fetch(username, wid, base_url, token, wait)
+                status = comp_dict['status']
+                print str(wid) + " " + status
+
+                if status == "Completed":
+                    system_elapsed = timeit.default_timer() - start_time
+                    write_log(exp_name, wid, status, comp_dict, system_elapsed, term, add_meta)
+                    queue.remove(queue[j])
+                    i = i + 1
+                    queue.insert(j,json_file_list[i])
+                    print "Moving to Next Job"
+                    continue
+
+                elif status == "Failed":
+                    system_elapsed = timeit.default_timer() - start_time
+                    write_log(exp_name, wid, status, comp_dict, system_elapsed, term,add_meta)
+                    queue.remove(queue[j])
+                    i = i + 1
+                    queue.insert(j,json_file_list[i])
+                    print "Moving to Next Job"
+                    continue
+
+
+
+        except IndexError:
+            token = get_token(username, password, key, secret)
+            for j in range(len(queue)):
+                metadata = open_metadata_file(j, sub_dir, json_file_list)
+                pri_meta = primary_metadata(metadata)
+                add_meta = additional_metadata(metadata)
+                term = add_meta["Encode Biosample ID"]
+                nb_id = notebook_search(term, add_meta, base_url, username, token)
+                print "Notebook ID " + str(nb_id)
+                exp_name = pri_meta["name"]
+                wid = experiment_add(username, token, metadata, base_url, nb_id, password, key, secret)['id']
+                print "Work ID: " + str(wid) + " submitted"
+                print j
+                if j != len(queue):
+                    continue
+                else:
+                    comp_dict = job_fetch(username, wid, base_url, token, wait)
+                    status = comp_dict['status']
+                    print str(wid) + " " + status
+                    if status == "Completed" and len(queue) == 4:
+                        system_elapsed = timeit.default_timer() - start_time
+                        write_log(exp_name, wid, status, comp_dict, system_elapsed, term, add_meta)
+
+
+
+                    elif status == "Failed":
+                        system_elapsed = timeit.default_timer() - start_time
+                        write_log(exp_name, wid, status, comp_dict, system_elapsed, term,add_meta)
+                        print "Moving to Next Job"
+
+      for i in range(min, max + 1):
+        token = get_token(username, password, key, secret)
         metadata = open_metadata_file(i, sub_dir, json_file_list)
 
         pri_meta = primary_metadata(metadata)
         add_meta = additional_metadata(metadata)
         term = add_meta["Encode Biosample ID"]
 
-        nb_id = notebook_search(term, add_meta, base_url, username, token, thread, password, key, secret)
+        nb_id = notebook_search(term, add_meta, base_url, username, token, password, key, secret)
 
-        print thread + " Notebook ID " + str(nb_id)
+        print "Notebook ID " + str(nb_id)
 
         exp_name = pri_meta["name"]
 
-        print thread + " Experiment Name: " + exp_name
+        print" Experiment Name: " + exp_name
 
-        wid = experiment_add(username, token, metadata, base_url, nb_id, thread, password, key, secret)['id']
+        wid = experiment_add(username, token, metadata, base_url, nb_id, password, key, secret)['id']
 
-        print thread + " Work ID: " + str(wid) + " submitted"
+        print "Work ID: " + str(wid) + " submitted"
 
-        comp_dict = job_fetch(username, wid, base_url, password, key, secret, thread, token, wait)
+        comp_dict = job_fetch(username, wid, base_url, password, key, secret, token, wait)
 
         status = comp_dict['status']
 
-        print thread + " " + str(wid) + " " + status
+        print str(wid) + " " + status
 
         if status == "Completed":
             system_elapsed = timeit.default_timer() - start_time
-            print thread + " Removing " + json_file_list[i] + " from files"
-            remove_file(i, sub_dir, json_file_list)
-            write_log(exp_name, wid, status, comp_dict, system_elapsed, term, thread, add_meta)
+            write_log(exp_name, wid, status, comp_dict, system_elapsed, term, add_meta)
         elif status == "Failed":
             system_elapsed = timeit.default_timer() - start_time
-            write_log(exp_name, wid, status, comp_dict, system_elapsed, term, thread, add_meta)
+            write_log(exp_name, wid, status, comp_dict, system_elapsed, term,add_meta)
 
-        print thread + " Moving to Next Job "
-
+        print " Moving to Next Job "
+        '''
 
 
 
@@ -412,26 +450,12 @@ def run_all(min, max):
 
 
 if __name__ == '__main__':
-    # sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
-    sub_dir = '/home/ajstangl/encode/jsons'  # for geco
-    json_files = file_list(sub_dir)
-    total_files = max_file_length(json_files)
-    temp = split_jobs(range(total_files), 4)
-    w1 = temp[0]
-    w2 = temp[1]
-    w3 = temp[2]
-    w4 = temp[3]
+    i = 0
+    upload_list = []
+    sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
+    json_file_list = file_list(sub_dir)
+    run_job(json_file_list)
 
-    p1 = Thread(target=run_all, args=(min(w1), max(w1)))
-    p2 = Thread(target=run_all, args=(min(w2), max(w2)))
-    p3 = Thread(target=run_all, args=(min(w3), max(w3)))
-    p4 = Thread(target=run_all, args=(min(w4), max(w4)))
 
-    p1.start()
-    time.sleep(20)
-    p2.start()
-    time.sleep(20)
-    p3.start()
-    time.sleep(20)
-    p4.start()
+
 
