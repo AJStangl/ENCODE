@@ -16,7 +16,6 @@ def user_data(mfile):
         info.close()
     return login
 
-
 def log_request(r, func_name):
     '''
 
@@ -38,18 +37,6 @@ def log_request(r, func_name):
         f.write(datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
         f.write('\n\n')
         f.close()
-
-
-def remove_file(i, sub_dir, json_file_list):
-    """
-
-    :param i:
-    :param sub_dir:
-    :param json_file_list:
-    :return:
-    """
-    os.remove(sub_dir + "/" + json_file_list[i])
-
 
 def get_token(username, password, key, secret):
     '''
@@ -76,7 +63,6 @@ def get_token(username, password, key, secret):
         print "Obtained Token " + r['access_token']
         return r['access_token']
 
-
 def file_list(sub_dir):
     '''
     Obtains the names in the a directory
@@ -88,12 +74,6 @@ def file_list(sub_dir):
         json_files.append(elem)
 
     return json_files
-
-
-def max_file_length(json_file_list):
-    num_files = len(json_file_list)
-    return num_files
-
 
 def open_metadata_file(i, sub_dir, json_file_list):
     '''
@@ -202,27 +182,23 @@ def experiment_add(username, token, metadata, base_url, nb_id, password, key, se
             continue
 
 
-def job_fetch(username, wid, base_url, token, wait):
+def job_fetch(username, wid, base_url, token):
     '''
     :param username: the username for auth
     :param token: The token provided from get_token()
     :param wid: The word id provided by experiment_add()
     :return: A JSON (dict) of the response from experiment_fetch
     '''
-    #while True:
+
     url = base_url + "api/v1/jobs/%d/?username=%s&token=%s" % (wid, username, token)
     r = requests.get(url)
     log_request(r, func_name=job_fetch.__name__)
-    #if r.status_code == 200:
-    response_dict = r.json()
-    #if response_dict['status'] == "Running":
-        #time.sleep(wait)
-        #continue
-    #else:
-    return response_dict
+    if r.status_code == 200:
+        response_dict = r.json()
+        return response_dict
 
 
-def write_log(exp_name, wid, status, comp_dict, system_elapsed, term, add_meta):
+def write_log(exp_name, wid, status, comp_dict, term, add_meta):
     if status == "Completed":
         cdat = []
         fsize = add_meta["File Size"]
@@ -231,7 +207,7 @@ def write_log(exp_name, wid, status, comp_dict, system_elapsed, term, add_meta):
             if elem['elapsed'] != None:
                 elapsed.append(elem['elapsed'])
         elapsed = sum(elapsed)
-        cl = [exp_name, wid, status, comp_dict, fsize, elapsed, system_elapsed]
+        cl = [exp_name, wid, status, comp_dict, fsize, elapsed]
         cdat.append(cl)
         with open("logs/" + "Completed_Log_" + term + "_" +  ".tsv" , "ab") as f:
             comp_log = csv.writer(f, lineterminator="\n", delimiter='\t')
@@ -247,26 +223,13 @@ def write_log(exp_name, wid, status, comp_dict, system_elapsed, term, add_meta):
             if elem['elapsed'] != None:
                 elapsed.append(elem['elapsed'])
         elapsed = sum(elapsed)
-        fl = [exp_name, wid, status, comp_dict, fsize, elapsed, system_elapsed]
+        fl = [exp_name, wid, status, comp_dict, fsize, elapsed]
         fdat.append(fl)
         with open("logs/" + "Failed_Log_" + term + "_" + ".tsv", "ab") as f:
             comp_log = csv.writer(f, lineterminator="\n", delimiter='\t')
             for elem in fdat:
                 comp_log.writerow(elem)
             f.close()
-
-
-def next_job(i, status):
-    """
-    :param status: The status of
-    :return: i
-    """
-    if status == "Completed":
-        i += 1
-
-    elif status == "Failed":
-        i += 1
-    return i
 
 
 def split_jobs(file_list, size):
@@ -283,31 +246,9 @@ def split_jobs(file_list, size):
     return ranges
 
 
-def file_remove(sub_dir, i, json_file_list):
-    """
-    This function removes the json file if the job is completed
-    :param sub_dir: The sub directory where the json file is located
-    :param i: The current index of the file
-    :param json_file_list: The list of files associated with the index
-    :return:None
-    """
-    os.remove(sub_dir + "/" + json_file_list[i])
-
-
-def run_job(json_file_list, i):
-
-    start_time = timeit.default_timer()
-
-    # Obtain user information
-    user = user_data('login.json')
-    username = user["username"]
-    password = user["password"]
-    secret = user["secret"]
-    key = user["key"]
-    # Set directories and obtain metadata
-    base_url = "https://geco.iplantcollaborative.org/coge/"
+def run_job(json_file_list, i, username, password, secret, key):
     # sub_dir = '/home/ajstangl/encode/jsons'
-    token = get_token(username, password, key, secret)
+
     metadata = open_metadata_file(i, sub_dir, json_file_list)
     pri_meta = primary_metadata(metadata)
     add_meta = additional_metadata(metadata)
@@ -318,143 +259,75 @@ def run_job(json_file_list, i):
     print "Experiment Name - " + exp_name
     wid = experiment_add(username, token, metadata, base_url, nb_id, password, key, secret)['id']
     print "Work ID: " + str(wid) + " submitted"
-    file_remove(sub_dir,json_file_list,i)
-    return {"wid":wid, "exp_name":exp_name}
-
-'''
-        else:
-            print wid_lst
-            for elem in wid_lst:
-                comp_dict = job_fetch(username, wid, base_url, token, wait)
-                print str(elem) + ' is running'
-                status = comp_dict['status']
-                time.sleep(10)
-                if status == "Running":
-                    continue
-                else:
-                    system_elapsed = timeit.default_timer() - start_time
-                    write_log(exp_name,wid,status, comp_dict, system_elapsed, term, add_meta)
-                    wid_lst.remove(elem)
-                    i = i + 1
-                    pass
-
-        else:
-            continue
-            # comp_dict = job_fetch(username, wid, base_url, token, wait)
-            # print str(elem) + ' is running'
-            # status = comp_dict['status']
-            # time.sleep(10)
-            if status == "Running":
-                continue
-            else:
-                system_elapsed = timeit.default_timer() - start_time
-                write_log(exp_name,wid,status, comp_dict, system_elapsed, term, add_meta)
-                wid_lst.remove(elem)
-                i = i + 1
-                pass
+    print 'Removing File - ' + json_file_list[i]
+    os.remove(sub_dir+"/"+json_file_list[i])
+    return {"wid":wid, "exp_name":exp_name, "term": term, "nb_id": nb_id, "add_meta": add_meta}
 
 
-                comp_dict = job_fetch(username, wid, base_url, token, wait)
-                status = comp_dict['status']
-                print str(wid) + " " + status
-
-                if status == "Completed":
-                    system_elapsed = timeit.default_timer() - start_time
-                    write_log(exp_name, wid, status, comp_dict, system_elapsed, term, add_meta)
-                    queue.remove(queue[j])
-                    i = i + 1
-                    queue.insert(j,json_file_list[i])
-                    print "Moving to Next Job"
-                    continue
-
-                elif status == "Failed":
-                    system_elapsed = timeit.default_timer() - start_time
-                    write_log(exp_name, wid, status, comp_dict, system_elapsed, term,add_meta)
-                    queue.remove(queue[j])
-                    i = i + 1
-                    queue.insert(j,json_file_list[i])
-                    print "Moving to Next Job"
-                    continue
-
-
-
-        except IndexError:
-            token = get_token(username, password, key, secret)
-            for j in range(len(queue)):
-                metadata = open_metadata_file(j, sub_dir, json_file_list)
-                pri_meta = primary_metadata(metadata)
-                add_meta = additional_metadata(metadata)
-                term = add_meta["Encode Biosample ID"]
-                nb_id = notebook_search(term, add_meta, base_url, username, token)
-                print "Notebook ID " + str(nb_id)
-                exp_name = pri_meta["name"]
-                wid = experiment_add(username, token, metadata, base_url, nb_id, password, key, secret)['id']
-                print "Work ID: " + str(wid) + " submitted"
-                print j
-                if j != len(queue):
-                    continue
-                else:
-                    comp_dict = job_fetch(username, wid, base_url, token, wait)
-                    status = comp_dict['status']
-                    print str(wid) + " " + status
-                    if status == "Completed" and len(queue) == 4:
-                        system_elapsed = timeit.default_timer() - start_time
-                        write_log(exp_name, wid, status, comp_dict, system_elapsed, term, add_meta)
-
-
-
-                    elif status == "Failed":
-                        system_elapsed = timeit.default_timer() - start_time
-                        write_log(exp_name, wid, status, comp_dict, system_elapsed, term,add_meta)
-                        print "Moving to Next Job"
-
-      for i in range(min, max + 1):
-        token = get_token(username, password, key, secret)
-        metadata = open_metadata_file(i, sub_dir, json_file_list)
-
-        pri_meta = primary_metadata(metadata)
-        add_meta = additional_metadata(metadata)
-        term = add_meta["Encode Biosample ID"]
-
-        nb_id = notebook_search(term, add_meta, base_url, username, token, password, key, secret)
-
-        print "Notebook ID " + str(nb_id)
-
-        exp_name = pri_meta["name"]
-
-        print" Experiment Name: " + exp_name
-
-        wid = experiment_add(username, token, metadata, base_url, nb_id, password, key, secret)['id']
-
-        print "Work ID: " + str(wid) + " submitted"
-
-        comp_dict = job_fetch(username, wid, base_url, password, key, secret, token, wait)
-
-        status = comp_dict['status']
-
-        print str(wid) + " " + status
-
-        if status == "Completed":
-            system_elapsed = timeit.default_timer() - start_time
-            write_log(exp_name, wid, status, comp_dict, system_elapsed, term, add_meta)
-        elif status == "Failed":
-            system_elapsed = timeit.default_timer() - start_time
-            write_log(exp_name, wid, status, comp_dict, system_elapsed, term,add_meta)
-
-        print " Moving to Next Job "
-        '''
-
-
-
-
+# def job_queue(json_file_list):
+#     queue = []
+#     while len(json_file_list) != 0:
+#         json_file_list = file_list(sub_dir)
+#         for i in range(len(file_list(sub_dir))):
+#             job = run_job(json_file_list, i, username, password, secret, key)
+#             queue.append(job)
+#             os.remove(sub_dir+"/"+json_file_list[i])
+#     return queue
 
 
 if __name__ == '__main__':
-    i = 0
-    upload_list = []
+    # User Information
+    user = user_data('login.json')
+    username = user["username"]
+    password = user["password"]
+    secret = user["secret"]
+    key = user["key"]
+
+
+
+    wait = 120
     sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
     json_file_list = file_list(sub_dir)
-    run_job(json_file_list)
+    base_url = "https://geco.iplantcollaborative.org/coge/"
+
+
+    i = 0
+    # Main Program Function
+    while True:
+        token = get_token(username, password, key, secret)
+        job = run_job(json_file_list,i,username,password,secret,key)
+        wid = job['wid']
+        comp_dict = job_fetch(wid, base_url, base_url, token)
+        status = job['status']
+        while status == 'running':
+
+
+
+
+
+            # if len(queue) > 3:
+            #     for elem in queue:
+            #         wid = elem['wid']
+            #         comp_dict = job_fetch(wid, base_url, token)
+            #         status = comp_dict['status']
+            #         if status == 'running':
+            #             time.sleep(30)
+            #             continue
+            #         else:
+            #             write_log(elem['exp_name'],elem['wid'], status, comp_dict, elem['term'], elem['add_meta'])
+            #             queue.remove(elem)
+            #             break
+
+
+
+
+
+
+
+
+
+
+
 
 
 
