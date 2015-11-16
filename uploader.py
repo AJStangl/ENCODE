@@ -356,7 +356,7 @@ def run_all(min, max):
             elapsed = timeit.default_timer() - start_time
             write_log(exp_name, wid, status, comp_dict, elapsed, term, thread)
         else:
-            print thread + 'Experiment Exists: Removing File - ' + json_file_list[i]
+            print thread + ' Experiment Exists: Removing File - ' + json_file_list[i]
             file_remove(sub_dir, i, json_file_list)
             pass
 
