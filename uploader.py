@@ -337,12 +337,14 @@ def run_all(min, max):
         exp_name = pri_meta["name"]
         nb_check = notebook_search(term, base_url, username, token, thread)
         exp_check = experiment_search(username, token, exp_name, base_url, thread)
+
         if nb_check == False:
              nb_id = notebook_add(thread, add_meta, username, token, base_url)["id"]
              print thread + " Notebook ID: " + str(nb_id)
         else:
             nb_id = notebook_search(term, base_url, username, token, thread)["id"]
             print thread + " Notebook ID: " + str(nb_id)
+
         if exp_check == False:
             print thread + " Experiment Name: " + exp_name
             wid = experiment_add(username, token, metadata, base_url, nb_id, thread)['id']
@@ -359,7 +361,7 @@ def run_all(min, max):
             pass
 
 
-        
+
 
 if __name__ == '__main__':
     sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
