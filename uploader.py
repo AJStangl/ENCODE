@@ -333,7 +333,7 @@ def run_all(min, max):
 
 
     for i in range(min, max + 1):
-        global token = get_token(username, password, key, secret, thread)
+       token = get_token(username, password, key, secret, thread)
 
         metadata = open_metadata_file(i, sub_dir, json_file_list)
 
