@@ -225,7 +225,7 @@ def experiment_search(username, token, exp_name, base_url, thread):
         return False
 
 
-def check_status(wid, wait, base_url, username, password, key, secret, thread):
+def check_status(wid, wait, base_url, username, password, key, secret, thread, exp_name):
     '''
     :param username:Your iPlant Username
     :param token: Token from iPlant Auth
@@ -237,12 +237,14 @@ def check_status(wid, wait, base_url, username, password, key, secret, thread):
     running = True
     while running:
         try:
-            status = job_fetch(username, wid, base_url, password, key, secret, thread)
+            job = job_fetch(username, wid, base_url, password, key, secret, thread)
             time.sleep(wait)
-            status = status['status']
+            status = job['status']
             time.sleep(wait)
             if status == "Completed":
+                exp = experiment_search(username, token, exp_name, base_url, thread)['id']
                 print thread + " Work ID: " + wid + " " + status
+                print thread + " Experiment ID: " + exp['id'] + " - " + exp['name']
                 return status
             elif status == "Running":
                 continue
@@ -339,6 +341,7 @@ def run_all(min, max):
 
     for i in range(min, max + 1):
         token = get_token(username, password, key, secret, thread)
+        print thread + " Obtaining New token "
         metadata = open_metadata_file(i, sub_dir, json_file_list)
         pri_meta = primary_metadata(metadata)
         add_meta = additional_metadata(metadata)
@@ -350,18 +353,16 @@ def run_all(min, max):
         else:
             nb_id = notebook_search(term, base_url, username, token, thread)["id"]
             print thread + " Notebook ID: " + str(nb_id)
-            exp_name = pri_meta["name"]
+        exp_name = pri_meta["name"]
         print thread + " Experiment Name: " + exp_name
-        print thread + " Obtaining New token "
+
         wid = experiment_add(username, token, metadata, base_url, nb_id, thread)['id']
         print thread + " Work ID: " + str(wid) + " submitted"
         print thread + " Removing " + json_file_list[i] + " from files"
         status = check_status(wid, wait, base_url, username, password, key, secret, thread)
         comp_dict = json.dumps(job_fetch(username, wid, base_url, password, key, secret, thread))
-        print thread + " Work ID:"+ str(wid) + "- " + status
-        if status == "Completed":
-            elapsed = timeit.default_timer() - start_time
-            write_log(exp_name, wid, status, comp_dict, elapsed, term, thread)
+        elapsed = timeit.default_timer() - start_time
+        write_log(exp_name, wid, status, comp_dict, elapsed, term, thread)
 
 if __name__ == '__main__':
     sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
