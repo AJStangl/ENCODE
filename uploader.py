@@ -195,6 +195,7 @@ def experiment_add(username, token, metadata, base_url, nb_id, thread):
 
 
 def job_fetch(username, wid, base_url, password, key, secret, thread):
+    global token
     '''
     :param username: the username for auth
     :param token: The token provided from get_token()
@@ -209,7 +210,7 @@ def job_fetch(username, wid, base_url, password, key, secret, thread):
         response_dict = r.json()
         return response_dict
     except KeyError:
-        global get_token(username, password, key, secret, thread)
+        token = get_token(username, password, key, secret, thread)
         job_fetch(username, wid, base_url, password, key, secret, thread)
 
 
