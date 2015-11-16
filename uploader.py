@@ -283,18 +283,6 @@ def write_log(exp_name, wid, status, comp_dict, elapsed, term, thread): # add_me
             f.close()
 
 
-def next_job(i, status):
-    """
-    :param status: The status of
-    :return: i
-    """
-    if status == "Completed":
-        i += 1
-    elif status == "Failed":
-        i += 1
-    return i
-
-
 def split_jobs(file_list, size):
     """
     :param file_list: The return of max_files file_list function. Specifies how many tasks need to be performed
@@ -341,28 +329,37 @@ def run_all(min, max):
 
     for i in range(min, max + 1):
         token = get_token(username, password, key, secret, thread)
-        print thread + " Obtaining New token "
+        print thread + " Obtaining New token " + token
         metadata = open_metadata_file(i, sub_dir, json_file_list)
         pri_meta = primary_metadata(metadata)
         add_meta = additional_metadata(metadata)
         term = add_meta["Encode Biosample ID"]
+        exp_name = pri_meta["name"]
         nb_check = notebook_search(term, base_url, username, token, thread)
+        exp_check = experiment_search(username, token, exp_name, base_url, thread)
         if nb_check == False:
              nb_id = notebook_add(thread, add_meta, username, token, base_url)["id"]
              print thread + " Notebook ID: " + str(nb_id)
         else:
             nb_id = notebook_search(term, base_url, username, token, thread)["id"]
             print thread + " Notebook ID: " + str(nb_id)
-        exp_name = pri_meta["name"]
-        print thread + " Experiment Name: " + exp_name
+        if exp_check == False:
+            print thread + " Experiment Name: " + exp_name
+            wid = experiment_add(username, token, metadata, base_url, nb_id, thread)['id']
+            print thread + " Work ID: " + str(wid) + " submitted"
+            print thread + " Removing " + json_file_list[i] + " from files"
+            file_remove(sub_dir, i, json_file_list)
+            status = check_status(wid, wait, base_url, username, password, key, secret, thread, exp_name)
+            comp_dict = json.dumps(job_fetch(username, wid, base_url, password, key, secret, thread))
+            elapsed = timeit.default_timer() - start_time
+            write_log(exp_name, wid, status, comp_dict, elapsed, term, thread)
+        else:
+            print thread + 'Experiment Exists: Removing File - ' + json_file_list[i]
+            file_remove(sub_dir, i, json_file_list)
+            pass
 
-        wid = experiment_add(username, token, metadata, base_url, nb_id, thread)['id']
-        print thread + " Work ID: " + str(wid) + " submitted"
-        print thread + " Removing " + json_file_list[i] + " from files"
-        status = check_status(wid, wait, base_url, username, password, key, secret, thread)
-        comp_dict = json.dumps(job_fetch(username, wid, base_url, password, key, secret, thread))
-        elapsed = timeit.default_timer() - start_time
-        write_log(exp_name, wid, status, comp_dict, elapsed, term, thread)
+
+        
 
 if __name__ == '__main__':
     sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
