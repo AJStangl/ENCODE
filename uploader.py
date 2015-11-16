@@ -23,7 +23,7 @@ def log_request(thread, r, func_name):
     :param r: response
     :return: none
     '''
-    with open(thread + '_log_requst.txt', 'ab') as f:
+    with open(thread + '_log_request.txt', 'ab') as f:
         f.write('Function: ' + func_name + '\n')
         f.write('request: ' + str(r.request) + '\n')
         f.write('headers: '+ str(r.headers) + '\n')
@@ -259,6 +259,7 @@ def write_log(exp_name, wid, status, comp_dict, elapsed, term, thread): # add_me
         comp_dict = json.dumps(comp_dict)
         cl = [exp_name, wid, status, comp_dict, elapsed]
         cdat.append(cl)
+        term = term.replace(":","_")
 
         with open("logs/" + "Completed_Log_" + term + "_" + thread + ".tsv" , "ab") as f:
             comp_log = csv.writer(f, lineterminator="\n", delimiter='\t')
@@ -319,6 +320,7 @@ def run_all(min, max):
     global token
     thread = threading.current_thread().name
     start_time = timeit.default_timer()
+
     # Obtain user information
     user = user_data('login.json')
     username = user["username"]
@@ -351,7 +353,7 @@ def run_all(min, max):
         print thread + " Obtaining New token"
         wid = experiment_add(username, token, metadata, base_url, nb_id, thread)['id']
         print thread + " Work ID: " + str(wid) + " submitted"
-        print thread + "Removing " + json_file_list[i] + " from files"
+        print thread + " Removing " + json_file_list[i] + " from files"
         status = check_status(wid, wait, base_url, username, password, key, secret, thread)
         comp_dict = json.dumps(job_fetch(username, wid, base_url, password, key, secret, thread))
         print thread + str(wid) + " " + status
