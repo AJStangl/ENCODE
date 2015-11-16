@@ -360,9 +360,6 @@ def run_all(min, max):
             file_remove(sub_dir, i, json_file_list)
             pass
 
-
-
-
 if __name__ == '__main__':
     sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
     # sub_dir = '/home/ajstangl/encode/jsons'  # for geco
