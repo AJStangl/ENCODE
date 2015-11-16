@@ -272,6 +272,7 @@ def write_log(exp_name, wid, status, comp_dict, elapsed, term, thread): # add_me
         comp_dict = json.dumps(comp_dict)
         fl = [exp_name, wid, status, comp_dict, elapsed]
         fdat.append(fl)
+        term = term.replace(":","_")
         with open("logs/" + "Failed_Log_" + term + "_" + thread + ".tsv", "ab") as f:
             comp_log = csv.writer(f, lineterminator="\n", delimiter='\t')
             for elem in fdat:
