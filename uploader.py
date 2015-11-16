@@ -242,11 +242,12 @@ def check_status(wid, wait, base_url, username, password, key, secret, thread):
             status = status['status']
             time.sleep(wait)
             if status == "Completed":
+                print thread + " Work ID: " + wid + " " + status
                 return status
             elif status == "Running":
                 continue
             else:
-                print thread + " " + status
+                print thread + " Work ID:" + wid + " " + status
                 return status
         except KeyError:
             print thread + " Error in KeyStatus " + check_status.__name__ + " Continuing"
@@ -357,7 +358,7 @@ def run_all(min, max):
         print thread + " Removing " + json_file_list[i] + " from files"
         status = check_status(wid, wait, base_url, username, password, key, secret, thread)
         comp_dict = json.dumps(job_fetch(username, wid, base_url, password, key, secret, thread))
-        print thread + str(wid) + " " + status
+        print thread + " Work ID:"+ str(wid) + "- " + status
         if status == "Completed":
             elapsed = timeit.default_timer() - start_time
             write_log(exp_name, wid, status, comp_dict, elapsed, term, thread)
