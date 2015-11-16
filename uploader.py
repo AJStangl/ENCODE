@@ -348,10 +348,10 @@ def run_all(min, max):
              print thread + " Notebook ID: " + str(nb_id)
         else:
             nb_id = notebook_search(term, base_url, username, token, thread)["id"]
-            print thread + " " + str(nb_id)
+            print thread + " Notebook ID: " + str(nb_id)
             exp_name = pri_meta["name"]
         print thread + " Experiment Name: " + exp_name
-        print thread + " Obtaining New token"
+        print thread + " Obtaining New token "
         wid = experiment_add(username, token, metadata, base_url, nb_id, thread)['id']
         print thread + " Work ID: " + str(wid) + " submitted"
         print thread + " Removing " + json_file_list[i] + " from files"
