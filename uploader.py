@@ -336,29 +336,26 @@ def run_all(min, max):
         term = add_meta["Encode Biosample ID"]
         exp_name = pri_meta["name"]
         nb_check = notebook_search(term, base_url, username, token, thread)
-        exp_check = experiment_search(username, token, exp_name, base_url, thread)
-
         if nb_check == False:
-             nb_id = notebook_add(thread, add_meta, username, token, base_url)["id"]
-             print thread + " Notebook ID: " + str(nb_id)
+            nb_id = notebook_add(thread, add_meta, username, token, base_url)["id"]
+            print thread + " Notebook ID: " + str(nb_id)
         else:
             nb_id = notebook_search(term, base_url, username, token, thread)["id"]
             print thread + " Notebook ID: " + str(nb_id)
 
-        if exp_check == False:
-            print thread + " Experiment Name: " + exp_name
-            wid = experiment_add(username, token, metadata, base_url, nb_id, thread)['id']
-            print thread + " Work ID: " + str(wid) + " submitted"
-            print thread + " Removing " + json_file_list[i] + " from files"
-            file_remove(sub_dir, i, json_file_list)
-            status = check_status(wid, wait, base_url, username, password, key, secret, thread, exp_name)
-            comp_dict = json.dumps(job_fetch(username, wid, base_url, password, key, secret, thread))
-            elapsed = timeit.default_timer() - start_time
-            write_log(exp_name, wid, status, comp_dict, elapsed, term, thread)
-        else:
-            print thread + ' Experiment Exists: Removing File - ' + json_file_list[i]
-            file_remove(sub_dir, i, json_file_list)
-            pass
+
+        print thread + " Experiment Name: " + exp_name
+        wid = experiment_add(username, token, metadata, base_url, nb_id, thread)['id']
+        print thread + " Work ID: " + str(wid) + " submitted"
+        print thread + " Removing " + json_file_list[i] + " from files"
+        file_remove(sub_dir, i, json_file_list)
+        status = check_status(wid, wait, base_url, username, password, key, secret, thread, exp_name)
+        comp_dict = json.dumps(job_fetch(username, wid, base_url, password, key, secret, thread))
+        elapsed = timeit.default_timer() - start_time    # sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
+
+        write_log(exp_name, wid, status, comp_dict, elapsed, term, thread)
+
+
 
 if __name__ == '__main__':
     sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
@@ -371,15 +368,15 @@ if __name__ == '__main__':
     w3 = temp[2]
     w4 = temp[3]
 
-    p1 = Thread(target=run_all, args=(min(w1), max(w1)))
-    p2 = Thread(target=run_all, args=(min(w2), max(w2)))
-    p3 = Thread(target=run_all, args=(min(w3), max(w3)))
-    p4 = Thread(target=run_all, args=(min(w4), max(w4)))
+    p1 = Thread(target=run_all, args=(min(w1), max(w4)))
+    # p2 = Thread(target=run_all, args=(min(w2), max(w2)))
+    # p3 = Thread(target=run_all, args=(min(w3), max(w3)))
+    # p4 = Thread(target=run_all, args=(min(w4), max(w4)))
 
     p1.start()
-    time.sleep(15)
-    p2.start()
-    time.sleep(15)
-    p3.start()
-    time.sleep(15)
-    p4.start()
+    # time.sleep(15)
+    # p2.start()
+    # time.sleep(15)
+    # p3.start()
+    # time.sleep(15)
+    # p4.start()
