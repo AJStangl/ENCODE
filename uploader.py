@@ -194,35 +194,19 @@ def experiment_add(username, token, metadata, base_url, nb_id, thread):
     return response_dict
 
 
-def job_fetch(username, wid, base_url, password, key, secret, thread):
-    global token
+def job_fetch(username, wid, base_url, thread, token):
     '''
     :param username: the username for auth
     :param token: The token provided from get_token()
     :param wid: The word id provided by experiment_add()
     :return: A JSON (dict) of the response from experiment_fetch
     '''
-    # token = get_token(username, password, key, secret, thread)
-    try:
-        url = base_url + "api/v1/jobs/%d/?username=%s&token=%s" % (wid, username, token)
-        r = requests.get(url)
-        log_request(thread, r, func_name=job_fetch.__name__)
-        response_dict = r.json()
-        return response_dict
-    except KeyError:
-        token = get_token(username, password, key, secret, thread)
-        job_fetch(username, wid, base_url, password, key, secret, thread)
-
-
-def experiment_search(username, token, exp_name, base_url, thread):
-    url = base_url + "api/v1/experiments/search/%s/?username=%s&token=%s" % (exp_name, username, token)
+    url = base_url + "api/v1/jobs/%d/?username=%s&token=%s" % (wid, username, token)
     r = requests.get(url)
-    log_request(thread, r, func_name=experiment_search.__name__)
-    resp_dict = r.json()
-    try:
-        return resp_dict["experiments"][0]
-    except IndexError:
-        return False
+    log_request(thread, r, func_name=job_fetch.__name__)
+    response_dict = r.json()
+    return response_dict
+
 
 
 def check_status(wid, wait, base_url, username, password, key, secret, thread, exp_name):
@@ -237,14 +221,13 @@ def check_status(wid, wait, base_url, username, password, key, secret, thread, e
     running = True
     while running:
         try:
-            job = job_fetch(username, wid, base_url, password, key, secret, thread)
+            token = get_token(username, password, key, secret, thread)
+            job = job_fetch(username, wid, base_url, thread, token)
             time.sleep(wait)
             status = job['status']
             time.sleep(wait)
             if status == "Completed":
-                exp = experiment_search(username, token, exp_name, base_url, thread)['id']
                 print thread + " Work ID: " + wid + " " + status
-                print thread + " Experiment ID: " + exp['id'] + " - " + exp['name']
                 return status
             elif status == "Running":
                 continue
@@ -336,26 +319,23 @@ def run_all(min, max):
         term = add_meta["Encode Biosample ID"]
         exp_name = pri_meta["name"]
         nb_check = notebook_search(term, base_url, username, token, thread)
+
+
         if nb_check == False:
-            nb_id = notebook_add(thread, add_meta, username, token, base_url)["id"]
-            print thread + " Notebook ID: " + str(nb_id)
+             nb_id = notebook_add(thread, add_meta, username, token, base_url)["id"]
+             print thread + " Notebook ID: " + str(nb_id)
         else:
             nb_id = notebook_search(term, base_url, username, token, thread)["id"]
             print thread + " Notebook ID: " + str(nb_id)
 
-
-        print thread + " Experiment Name: " + exp_name
         wid = experiment_add(username, token, metadata, base_url, nb_id, thread)['id']
         print thread + " Work ID: " + str(wid) + " submitted"
         print thread + " Removing " + json_file_list[i] + " from files"
         file_remove(sub_dir, i, json_file_list)
         status = check_status(wid, wait, base_url, username, password, key, secret, thread, exp_name)
         comp_dict = json.dumps(job_fetch(username, wid, base_url, password, key, secret, thread))
-        elapsed = timeit.default_timer() - start_time    # sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
-
+        elapsed = timeit.default_timer() - start_time
         write_log(exp_name, wid, status, comp_dict, elapsed, term, thread)
-
-
 
 if __name__ == '__main__':
     sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
