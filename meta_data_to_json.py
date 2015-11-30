@@ -1,5 +1,5 @@
 __author__ = 'AJ'
-import json, csv, os, requests, urllib
+import json, csv, os, sys
 '''
 This script will load "bam_meta_data_encode.txt from the current working directory and create a json files consistent
 with the use case of the experiment add RESTful API.
@@ -15,10 +15,10 @@ class JsonObject:
     def __init__(self):
         return
 
-    def add_data(self):
+    def add_data(self,in_file):
 
 
-        with open("encode_test.tsv", "r") as infile:
+        with open(in_file, "r") as infile:
             headings = next(infile)
             reader = csv.reader(infile, delimiter='\t')
             i = 0
@@ -70,4 +70,6 @@ class RowObject:
         # self.expression_params = expression_params
         return
 
-JsonObject().add_data()
+if __name__ == '__main__':
+    in_file = sys.argv[1]
+    JsonObject().add_data(in_file)
