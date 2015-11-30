@@ -55,25 +55,28 @@ def get_token(username, password, key, secret, thread):
     '''
     func_name = get_token.__name__
     while True:
-        payload = {'grant_type': "client_credentials", 'username': username, 'password': password, 'scope': 'PRODUCTION'}
-        auth = (key, secret)
-        r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
-        time.sleep(1)
-        if r.status_code != 200:
-            print thread + " Problem With obtaining Token - Sleep and Continue " + thread
-            time.sleep(30)
+        try:
+            payload = {'grant_type': "client_credentials", 'username': username, 'password': password, 'scope': 'PRODUCTION'}
+            auth = (key, secret)
+            r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
+            time.sleep(1)
+            if r.status_code != 200:
+                print thread + " Problem With obtaining Token - Sleep and Continue " + thread
+                time.sleep(30)
+                continue
+            r = r.json()
+            refresh = r["refresh_token"]
+            payload = {'grant_type': 'refresh_token', 'refresh_token': refresh}
+            r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
+            if r.status_code != 200:
+                print thread + " Problem With Refreshing Token - Sleep and Continue"
+                time.sleep(30)
+                continue
+            log_request(thread, r, func_name)
+            r = r.json()
+            return r['access_token']
+        except KeyError:
             continue
-        r = r.json()
-        refresh = r["refresh_token"]
-        payload = {'grant_type': 'refresh_token', 'refresh_token': refresh}
-        r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
-        if r.status_code != 200:
-            print thread + " Problem With Refreshing Token - Sleep and Continue"
-            time.sleep(30)
-            continue
-        log_request(thread, r, func_name)
-        r = r.json()
-        return r['access_token']
 
 
 def file_list(sub_dir):
@@ -227,12 +230,12 @@ def check_status(wid, wait, base_url, username, password, key, secret, thread, e
             status = job['status']
             time.sleep(wait)
             if status == "Completed":
-                print thread + " Work ID: " + wid + " " + status
+                print thread + " Work ID: " + str(wid) + " " + status
                 return status
             elif status == "Running":
                 continue
             else:
-                print thread + " Work ID:" + wid + " " + status
+                print thread + " Work ID:" + str(wid) + " " + status
                 return status
         except KeyError:
             print thread + " Error in KeyStatus " + check_status.__name__ + " Continuing"
@@ -333,13 +336,13 @@ def run_all(min, max):
         print thread + " Removing " + json_file_list[i] + " from files"
         file_remove(sub_dir, i, json_file_list)
         status = check_status(wid, wait, base_url, username, password, key, secret, thread, exp_name)
-        comp_dict = json.dumps(job_fetch(username, wid, base_url, password, key, secret, thread))
+        comp_dict = json.dumps(job_fetch(username, wid, base_url, thread, token))
         elapsed = timeit.default_timer() - start_time
         write_log(exp_name, wid, status, comp_dict, elapsed, term, thread)
 
 if __name__ == '__main__':
-    sub_dir = 'C:\Users\AJ\PycharmProjects\Encode\jsons'
-    # sub_dir = '/home/ajstangl/encode/jsons'  # for geco
+
+    sub_dir = '/home/ajstangl/encode/jsons'
     json_files = file_list(sub_dir)
     total_files = max_file_length(json_files)
     temp = split_jobs(range(total_files), 4)
