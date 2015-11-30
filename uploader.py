@@ -197,6 +197,25 @@ def experiment_add(username, token, metadata, base_url, nb_id, thread):
     return response_dict
 
 
+def write_experiment(wid, thread, exp_name):
+    '''
+
+    :param wid:
+    :param thread:
+    :param exp_ame:
+    :return:
+    '''
+    dat = []
+    d1 = [exp_name, wid]
+    dat.append(d1)
+    with open(thread + '_work_ids.tsv', 'ab') as f:
+        log = csv.writer(f, lineterminator="\n", delimiter='\t')
+        for elem in dat:
+            log.writerow(elem)
+        f.close()
+
+
+
 def job_fetch(username, wid, base_url, thread, token):
     '''
     :param username: the username for auth
@@ -209,7 +228,6 @@ def job_fetch(username, wid, base_url, thread, token):
     log_request(thread, r, func_name=job_fetch.__name__)
     response_dict = r.json()
     return response_dict
-
 
 
 def check_status(wid, wait, base_url, username, password, key, secret, thread, exp_name):
@@ -318,9 +336,10 @@ def run_all(min, max):
         print thread + " Obtaining New token " + token
         metadata = open_metadata_file(i, sub_dir, json_file_list)
         pri_meta = primary_metadata(metadata)
+        exp_name = pri_meta["name"]
         add_meta = additional_metadata(metadata)
         term = add_meta["Encode Biosample ID"]
-        exp_name = pri_meta["name"]
+
         nb_check = notebook_search(term, base_url, username, token, thread)
 
 
@@ -332,6 +351,7 @@ def run_all(min, max):
             print thread + " Notebook ID: " + str(nb_id)
 
         wid = experiment_add(username, token, metadata, base_url, nb_id, thread)['id']
+        write_experiment(wid,thread,exp_name)
         print thread + " Work ID: " + str(wid) + " submitted"
         print thread + " Removing " + json_file_list[i] + " from files"
         file_remove(sub_dir, i, json_file_list)
