@@ -312,13 +312,13 @@ def file_remove(sub_dir, i, json_file_list):
     os.remove(sub_dir + "/" + json_file_list[i])
 
 
-def run_all(min, max):
+def run_all(min, max, client):
     global token
     thread = threading.current_thread().name
     start_time = timeit.default_timer()
 
     # Obtain user information
-    user = user_data('login.json')
+    user = user_data(client)
     username = user["username"]
     password = user["password"]
     secret = user["secret"]
@@ -371,15 +371,17 @@ if __name__ == '__main__':
     w3 = temp[2]
     w4 = temp[3]
 
-    p1 = Thread(target=run_all, args=(min(w1), max(w4)))
-    # p2 = Thread(target=run_all, args=(min(w2), max(w2)))
-    # p3 = Thread(target=run_all, args=(min(w3), max(w3)))
-    # p4 = Thread(target=run_all, args=(min(w4), max(w4)))
+    client1 = 'client1.json'
+    client2 = 'client2.json'
+    client3 = 'client3.json'
+    client4 = 'client4.json'
+
+    p1 = Thread(target=run_all, args=(min(w1), max(w1), client1))
+    p2 = Thread(target=run_all, args=(min(w2), max(w2), client2))
+    p3 = Thread(target=run_all, args=(min(w3), max(w3), client3))
+    p4 = Thread(target=run_all, args=(min(w4), max(w4), client4))
 
     p1.start()
-    # time.sleep(15)
-    # p2.start()
-    # time.sleep(15)
-    # p3.start()
-    # time.sleep(15)
-    # p4.start()
+    p2.start()
+    p3.start()
+    p4.start()
