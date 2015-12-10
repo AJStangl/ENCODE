@@ -1,9 +1,8 @@
+
 __author__ = 'AJ'
-import json, requests, os, time, timeit, csv
+import json, requests, os, time, timeit, csv, sys
 from threading import Thread
 import threading
-
-
 
 def user_data(mfile):
     '''
@@ -260,11 +259,11 @@ def check_status(wid, wait, base_url, username, password, key, secret, thread, e
             continue
 
 
-def write_log(exp_name, wid, status, comp_dict, elapsed, term, thread): # add_meta["File Size"] in the future
+def write_log(exp_name, wid, status, comp_dict, term, thread): # add_meta["File Size"] in the future
     if status == "Completed":
         cdat = []
         comp_dict = json.dumps(comp_dict)
-        cl = [exp_name, wid, status, comp_dict, elapsed]
+        cl = [exp_name, wid, status, comp_dict]
         cdat.append(cl)
         term = term.replace(":","_")
 
@@ -277,7 +276,7 @@ def write_log(exp_name, wid, status, comp_dict, elapsed, term, thread): # add_me
     else:
         fdat = []
         comp_dict = json.dumps(comp_dict)
-        fl = [exp_name, wid, status, comp_dict, elapsed]
+        fl = [exp_name, wid, status, comp_dict]
         fdat.append(fl)
         term = term.replace(":","_")
         with open("logs/" + "Failed_Log_" + term + "_" + thread + ".tsv", "ab") as f:
@@ -313,10 +312,8 @@ def file_remove(sub_dir, i, json_file_list):
 
 
 def run_all(min, max, client):
-    global token
     thread = threading.current_thread().name
-    start_time = timeit.default_timer()
-
+    start = time.time()
     # Obtain user information
     user = user_data(client)
     username = user["username"]
@@ -357,11 +354,10 @@ def run_all(min, max, client):
         file_remove(sub_dir, i, json_file_list)
         status = check_status(wid, wait, base_url, username, password, key, secret, thread, exp_name)
         comp_dict = json.dumps(job_fetch(username, wid, base_url, thread, token))
-        elapsed = timeit.default_timer() - start_time
-        write_log(exp_name, wid, status, comp_dict, elapsed, term, thread)
+        write_log(exp_name, wid, status, comp_dict, term, thread)
 
 if __name__ == '__main__':
-
+    go = sys.argv[1]
     sub_dir = '/home/ajstangl/encode/jsons'
     json_files = file_list(sub_dir)
     total_files = max_file_length(json_files)
@@ -370,6 +366,7 @@ if __name__ == '__main__':
     w2 = temp[1]
     w3 = temp[2]
     w4 = temp[3]
+
 
     client1 = 'client1.json'
     client2 = 'client2.json'
@@ -380,8 +377,38 @@ if __name__ == '__main__':
     p2 = Thread(target=run_all, args=(min(w2), max(w2), client2))
     p3 = Thread(target=run_all, args=(min(w3), max(w3), client3))
     p4 = Thread(target=run_all, args=(min(w4), max(w4), client4))
-
-    p1.start()
-    p2.start()
-    p3.start()
-    p4.start()
+    # entry = int(raw_input("Select Which Thread to Process 1 - 4: "))
+    # while entry != 1 or entry != 2 or entry != 3  or entry != 4:
+    #     if entry == 1:
+    #         print "Starting Thread 1 "
+    #         p1.start()
+    #         break
+    #     elif entry == 2:
+    #         print "Starting Thread 2 "
+    #         p2.start()
+    #         break
+    #     elif entry == 3:
+    #         print "Starting Thread 3 "
+    #         p3.start()
+    #         break
+    #     elif entry == 4:
+    #         print "Starting Thread 4 "
+    #         p4.start()
+    #         break
+    #     else:
+    #         print "Invalid Entry"
+    #         entry = int(raw_input("Select Which Thread to Process 1 - 4: "))
+    #
+    if go == str(1):
+        p1.start()
+    elif go == str(2):
+        p2.start()
+    elif go == str(3):
+        p3.start()
+    elif go == str(4):
+        p4.start()
+    else:
+        p1.start()
+        p2.start()
+        p3.start()
+        p4.start()

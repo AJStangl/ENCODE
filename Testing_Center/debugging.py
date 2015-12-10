@@ -42,7 +42,6 @@ def get_token(username, password, key, secret):
         refresh = r["refresh_token"]
         payload = {'grant_type': 'refresh_token', 'refresh_token': refresh}
         r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
-        print r.content
         if r.status_code != 200:
             time.sleep(30)
             continue
@@ -62,8 +61,9 @@ if __name__ == '__main__':
     key = user["key"]
     base_url = "https://geco.iplantcollaborative.org/coge/"
     token = get_token(username, password, key, secret)
-    job = job_fetch(username, 32470, base_url, token)
-    data = {}
-    data[token] = job['id']
-    data = json.dumps(data)
-    print data
+    job = job_fetch(username, 32569, base_url, token)
+    elapsed = []
+    for elem in job['tasks']:
+        elapsed.append(elem['elapsed'])
+
+    print sum(elapsed)

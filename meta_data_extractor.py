@@ -212,14 +212,7 @@ def metadata_extractor(exp_url_list):
     return
 
 
-# Sudo Main
-exp_url_list = get_exp_url(search= "/search/?type=experiment&assay_term_name=ChIP-seq&status=released&assembly=hg19&limit=all")
-metadata_extractor(exp_url_list)
-
-
-
-
-
-
-
+if __name__ == '__main__':
+    exp_url_list = get_exp_url(search= "/search/?type=experiment&assay_term_name=ChIP-seq&status=released&assembly=hg19&limit=all")
+    metadata_extractor(exp_url_list)
 
