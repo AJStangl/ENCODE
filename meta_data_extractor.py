@@ -222,6 +222,8 @@ class JsonObject:
         return
 
     def add_data(self, in_file):
+        if not os.path.exists('jsons'):
+            os.mkdirs('jsons')
 
 
         with open(in_file, "r") as infile:
@@ -279,7 +281,7 @@ if __name__ == '__main__':
     search = sys.argv[1]
     filename = sys.argv[2]
     in_file = filename + ".tsv"
-    exp_url_list = get_exp_url(sys.argv[1])
+    exp_url_list = get_exp_url(search)
     # exp_url_list = get_exp_url(search= "/search/?type=experiment&assay_term_name=ChIP-seq&status=released&assembly=hg19&limit=all")
     metadata_extractor(exp_url_list, filename)
     JsonObject().add_data(in_file)
