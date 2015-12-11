@@ -278,8 +278,8 @@ class RowObject:
         self.expression_params = expression_params
         return
 if __name__ == '__main__':
-    search = raw_input("Enter Search URL: -- https://www.encodeproject.org/")
-    filetype = raw_input("Enter File Type (bam or fastq")
+    search = raw_input("Enter Search URL: -- https://www.encodeproject.org/ ")
+    filetype = raw_input("Enter File Type (bam or fastq): ")
     filename = raw_input("Enter filename to make: ")
     genome_id = raw_input("Enter Genome ID: ")
     in_file = filename + ".tsv"
