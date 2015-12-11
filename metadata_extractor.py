@@ -26,7 +26,7 @@ def get_exp_url(search):
     return exp_url_list
 
 
-def metadata_extractor(exp_url_list, filename):
+def metadata_extractor(exp_url_list, filename, filetype):
     """
     Extracts metadata and URLs for meta_data_json.py and export the data as a TSV
     :param exp_url_list: URL list from get_exp_url.py
@@ -49,7 +49,7 @@ def metadata_extractor(exp_url_list, filename):
             i = 0
 
             while i < len(exp_dict["files"]): # Checks to see if annotation is present
-                if exp_dict["files"][i]["file_type"] == "bam":
+                if exp_dict["files"][i]["file_type"] == filetype:
 
                     # Start Data Extraction
                     ###################################################################################################
@@ -279,12 +279,13 @@ class RowObject:
         return
 if __name__ == '__main__':
     search = raw_input("Enter Search URL: -- https://www.encodeproject.org/")
-    filename = raw_input("Enter filename to create TSV: ")
+    filetype = raw_input("Enter File Type (bam or fastq")
+    filename = raw_input("Enter filename to make: ")
     genome_id = raw_input("Enter Genome ID: ")
     in_file = filename + ".tsv"
     exp_url_list = get_exp_url(search)
     # exp_url_list = get_exp_url(search= "/search/?type=experiment&assay_term_name=ChIP-seq&status=released&assembly=hg19&limit=all")
-    metadata_extractor(exp_url_list, filename)
+    metadata_extractor(exp_url_list, filename, filetype)
     JsonObject().add_data(in_file, genome_id)
 
 
