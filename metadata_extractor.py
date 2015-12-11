@@ -221,7 +221,7 @@ class JsonObject:
     def __init__(self):
         return
 
-    def add_data(self, in_file):
+    def add_data(self, in_file, genome_id):
         if not os.path.exists('jsons'):
             os.mkdirs('jsons')
 
@@ -256,7 +256,7 @@ class JsonObject:
 
                 expression_params = {"-Q": 20}
                 source_data = [{"type": "http", "path": row[20]}]
-                temp = RowObject(int(26225), metadata, source_data, additional_metadata, expression_params)
+                temp = RowObject(int(genome_id), metadata, source_data, additional_metadata, expression_params)
                 with open("jsons/" + row[0] + ".json", "w") as outfile:
                     outfile.write(json.dumps(temp.__dict__))
 
@@ -278,12 +278,13 @@ class RowObject:
         self.expression_params = expression_params
         return
 if __name__ == '__main__':
-    search = sys.argv[1]
-    filename = sys.argv[2]
+    search = raw_input("Enter Search URL: -- https://www.encodeproject.org/")
+    filename = raw_input("Enter filename to create TSV: ")
+    genome_id = raw_input("Enter Genome ID: ")
     in_file = filename + ".tsv"
     exp_url_list = get_exp_url(search)
     # exp_url_list = get_exp_url(search= "/search/?type=experiment&assay_term_name=ChIP-seq&status=released&assembly=hg19&limit=all")
     metadata_extractor(exp_url_list, filename)
-    JsonObject().add_data(in_file)
+    JsonObject().add_data(in_file, genome_id)
 
 

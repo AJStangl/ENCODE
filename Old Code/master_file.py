@@ -1,5 +1,5 @@
 __author__ = 'AJ'
-from meta_data_extractor import  get_exp_url, metadata_extractor, exp_dict_writer
+from metadata_extractor import  get_exp_url, metadata_extractor, exp_dict_writer
 
 '''Depricated Script'''
 get_exp_url()

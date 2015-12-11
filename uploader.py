@@ -367,7 +367,6 @@ if __name__ == '__main__':
     w3 = temp[2]
     w4 = temp[3]
 
-
     client1 = 'client1.json'
     client2 = 'client2.json'
     client3 = 'client3.json'
