@@ -3,6 +3,7 @@ __author__ = 'AJ'
 import json, requests, os, time, timeit, csv, sys
 from threading import Thread
 import threading
+import datetime
 
 def user_data(mfile):
     '''
@@ -60,7 +61,7 @@ def get_token(username, password, key, secret, thread):
             r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
             time.sleep(1)
             if r.status_code != 200:
-                print thread + " Problem With obtaining Token - Sleep and Continue " + thread
+                print thread + " Problem With obtaining Token - Sleep and Continue " + thread + str(datetime.datetime.now())
                 time.sleep(30)
                 continue
             r = r.json()
@@ -68,7 +69,7 @@ def get_token(username, password, key, secret, thread):
             payload = {'grant_type': 'refresh_token', 'refresh_token': refresh}
             r = requests.post('https://agave.iplantc.org/token', data=payload, auth=auth)
             if r.status_code != 200:
-                print thread + " Problem With Refreshing Token - Sleep and Continue"
+                print thread + " Problem With Refreshing Token - Sleep and Continue " + str(datetime.datetime.now())
                 time.sleep(30)
                 continue
             log_request(thread, r, func_name)
@@ -247,15 +248,15 @@ def check_status(wid, wait, base_url, username, password, key, secret, thread, e
             status = job['status']
             time.sleep(wait)
             if status == "Completed":
-                print thread + " Work ID: " + str(wid) + " " + status
+                print thread + " Work ID: " + str(wid) + " " + status + " " + str(datetime.datetime.now())
                 return status
             elif status == "Running":
                 continue
             else:
-                print thread + " Work ID:" + str(wid) + " " + status
+                print thread + " Work ID:" + str(wid) + " " + status + " " + str(datetime.datetime.now())
                 return status
         except KeyError:
-            print thread + " Error in KeyStatus " + check_status.__name__ + " Continuing"
+            print thread + " Error in KeyStatus " + check_status.__name__ + " Continuing " + str(datetime.datetime.now())
             continue
 
 
@@ -330,7 +331,7 @@ def run_all(min, max, client):
 
     for i in range(min, max + 1):
         token = get_token(username, password, key, secret, thread)
-        print thread + " Obtaining New token " + token
+        print thread + " Obtaining New token " + token + " " + str(datetime.datetime.now())
         metadata = open_metadata_file(i, sub_dir, json_file_list)
         pri_meta = primary_metadata(metadata)
         exp_name = pri_meta["name"]
@@ -342,15 +343,15 @@ def run_all(min, max, client):
 
         if nb_check == False:
              nb_id = notebook_add(thread, add_meta, username, token, base_url)["id"]
-             print thread + " Notebook ID: " + str(nb_id)
+             print thread + " Notebook ID: " + str(nb_id) + " " + str(datetime.datetime.now())
         else:
             nb_id = notebook_search(term, base_url, username, token, thread)["id"]
-            print thread + " Notebook ID: " + str(nb_id)
+            print thread + " Notebook ID: " + str(nb_id) + " " + str(datetime.datetime.now())
 
         wid = experiment_add(username, token, metadata, base_url, nb_id, thread)['id']
         write_experiment(wid,thread,exp_name)
-        print thread + " Work ID: " + str(wid) + " submitted"
-        print thread + " Removing " + json_file_list[i] + " from files"
+        print thread + " Work ID: " + str(wid) + " submitted - " + str(datetime.datetime.now())
+        print thread + " Removing " + json_file_list[i] + " from files - " + str(datetime.datetime.now())
         file_remove(sub_dir, i, json_file_list)
         status = check_status(wid, wait, base_url, username, password, key, secret, thread, exp_name)
         comp_dict = json.dumps(job_fetch(username, wid, base_url, thread, token))
